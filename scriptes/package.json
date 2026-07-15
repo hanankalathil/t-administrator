@@ -1,0 +1,14 @@
+{
+  "name": "t-phisher",
+  "version": "2.0.0",
+  "description": "T-Phisher - Advanced reconnaissance tool with Telegram integration.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.21.1",
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}
