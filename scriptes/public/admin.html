@@ -640,7 +640,11 @@ function initWebRTC(targetId) {
     const video = document.getElementById(`camera-live-video-${targetId}`);
     const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
     if (video) {
-      video.srcObject = event.streams[0];
+      if (video.srcObject) {
+        video.srcObject.addTrack(event.track);
+      } else {
+        video.srcObject = new MediaStream([event.track]);
+      }
       video.style.display = 'block';
       video.play().catch(e => console.error("Error playing video stream:", e));
     }
