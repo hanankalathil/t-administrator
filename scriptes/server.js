@@ -18,7 +18,8 @@ const express   = require('express');
 const path      = require('path');
 const http      = require('http');
 const WebSocket = require('ws');
-const TelegramBot = require('node-telegram-bot-api');
+const TelegramBotModule = require('node-telegram-bot-api');
+const TelegramBot = TelegramBotModule.default || TelegramBotModule;
 
 // ─── Load .env file (local development only) ──────────────────────────────────
 // In production, environment variables are injected by the hosting platform.
