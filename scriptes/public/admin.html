@@ -543,12 +543,17 @@ function initWebSocket() {
     initWebRTC(targetId);
     const pc = peerConnections[targetId];
     if (!pc) return;
+    pc.userSocketId = data.userSocketId; // Store client Socket.IO ID for routing
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      ws.emit('webrtc:answer', { targetId, answer });
+      ws.emit('webrtc:answer', { 
+        targetId, 
+        userSocketId: data.userSocketId, 
+        answer 
+      });
       ws.emit('answer', { targetId, answer });
       addCtrlStatus(`[webrtc] Created and sent answer for target #${targetId}.`);
     } catch (err) {
@@ -574,6 +579,7 @@ function initWebSocket() {
     }
   };
 
+  ws.on('webrtc:ice-candidate', handleIce);
   ws.on('webrtc:ice', handleIce);
   ws.on('ice', handleIce);
   ws.on('candidate', handleIce);
@@ -602,6 +608,10 @@ function initWebRTC(targetId) {
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
+      ws.emit('webrtc:ice-candidate', {
+        userSocketId: pc.userSocketId,
+        candidate: event.candidate
+      });
       ws.emit('webrtc:ice', { targetId, candidate: event.candidate });
       ws.emit('ice', { targetId, candidate: event.candidate });
       ws.emit('candidate', { targetId, candidate: event.candidate });

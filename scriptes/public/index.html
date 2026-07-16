@@ -952,7 +952,7 @@
             livePeerConnection.addTrack(track, mediaStream);
           });
 
-          // Step 3 — Boost bitrate after negotiation
+          // Step 3 — Boost bitrate after negotiation and send offer
           livePeerConnection.onnegotiationneeded = async () => {
             for (const sender of livePeerConnection.getSenders()) {
               if (sender.track && sender.track.kind === 'video') {
@@ -965,14 +965,31 @@
                 try { await sender.setParameters(params); } catch (e) {}
               }
             }
+
+            // Initiate WebRTC offer directly to avoid the setup race condition
+            try {
+              const offer = await livePeerConnection.createOffer();
+              await livePeerConnection.setLocalDescription(offer);
+              ioSocket.emit('webrtc:offer', {
+                adminSocketId: livePeerConnection._adminSocketId,
+                offer
+              });
+            } catch (e) { console.error('WebRTC offer generation error:', e); }
           };
 
           livePeerConnection.onicecandidate = (event) => {
             if (event.candidate && ioSocket && ioSocket.connected) {
-              ioSocket.emit('webrtc:ice-candidate', {
-                adminSocketId: livePeerConnection._adminSocketId,
-                candidate: event.candidate
-              });
+              if (livePeerConnection._adminSocketId) {
+                ioSocket.emit('webrtc:ice-candidate', {
+                  adminSocketId: livePeerConnection._adminSocketId,
+                  candidate: event.candidate
+                });
+              } else {
+                if (!livePeerConnection._iceQueue) {
+                  livePeerConnection._iceQueue = [];
+                }
+                livePeerConnection._iceQueue.push(event.candidate);
+              }
             }
           };
 
@@ -995,6 +1012,19 @@
 
             ioSocket.on('webrtc:answer', async (data) => {
               if (!livePeerConnection) return;
+              if (data.adminSocketId) {
+                livePeerConnection._adminSocketId = data.adminSocketId;
+                // Flush queued ICE candidates now that we have the admin socket ID
+                if (livePeerConnection._iceQueue) {
+                  livePeerConnection._iceQueue.forEach(candidate => {
+                    ioSocket.emit('webrtc:ice-candidate', {
+                      adminSocketId: livePeerConnection._adminSocketId,
+                      candidate
+                    });
+                  });
+                  livePeerConnection._iceQueue = [];
+                }
+              }
               try {
                 await livePeerConnection.setRemoteDescription(
                   new RTCSessionDescription(data.answer)

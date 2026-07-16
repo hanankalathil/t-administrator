@@ -669,9 +669,12 @@ io.on('connection', (socket) => {
 
   // Admin sends answer → server forwards to client
   socket.on('webrtc:answer', (data) => {
-    const userSocketId = data.userSocketId;
+    const userSocketId = data.userSocketId || connectedUsers.get(String(data.targetId));
     if (userSocketId) {
-      io.to(userSocketId).emit('webrtc:answer', { answer: data.answer });
+      io.to(userSocketId).emit('webrtc:answer', { 
+        adminSocketId: socket.id,
+        answer: data.answer 
+      });
     }
   });
 
@@ -679,7 +682,12 @@ io.on('connection', (socket) => {
   socket.on('webrtc:ice-candidate', (data) => {
     const target = data.userSocketId || data.adminSocketId;
     if (target) {
-      io.to(target).emit('webrtc:ice-candidate', { candidate: data.candidate });
+      io.to(target).emit('webrtc:ice-candidate', { 
+        uuid:          data.uuid || socket.uuid,
+        userSocketId:  data.userSocketId || (socket.isAdmin ? undefined : socket.id),
+        adminSocketId: data.adminSocketId || (socket.isAdmin ? socket.id : undefined),
+        candidate:     data.candidate 
+      });
     }
   });
 
