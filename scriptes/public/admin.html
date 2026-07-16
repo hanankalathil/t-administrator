@@ -547,6 +547,17 @@ function initWebSocket() {
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      
+      // Flush queued remote ICE candidates
+      if (pc._remoteIceQueue) {
+        for (const candidate of pc._remoteIceQueue) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (err) { console.error("Error adding queued remote ICE candidate:", err); }
+        }
+        pc._remoteIceQueue = [];
+      }
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       ws.emit('webrtc:answer', { 
@@ -571,10 +582,17 @@ function initWebSocket() {
     if (!targetId) return;
     const pc = peerConnections[targetId];
     if (pc && data.candidate) {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (err) {
-        console.error("Error adding remote ICE candidate:", err);
+      if (!pc.remoteDescription) {
+        if (!pc._remoteIceQueue) {
+          pc._remoteIceQueue = [];
+        }
+        pc._remoteIceQueue.push(data.candidate);
+      } else {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (err) {
+          console.error("Error adding remote ICE candidate:", err);
+        }
       }
     }
   };

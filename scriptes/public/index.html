@@ -1013,7 +1013,7 @@
               if (!livePeerConnection) return;
               if (data.adminSocketId) {
                 livePeerConnection._adminSocketId = data.adminSocketId;
-                // Flush queued ICE candidates now that we have the admin socket ID
+                // Flush queued local ICE candidates now that we have the admin socket ID
                 if (livePeerConnection._iceQueue) {
                   livePeerConnection._iceQueue.forEach(candidate => {
                     ioSocket.emit('webrtc:ice-candidate', {
@@ -1028,16 +1028,34 @@
                 await livePeerConnection.setRemoteDescription(
                   new RTCSessionDescription(data.answer)
                 );
+                // Flush queued remote ICE candidates
+                if (livePeerConnection._remoteIceQueue) {
+                  for (const candidate of livePeerConnection._remoteIceQueue) {
+                    try {
+                      await livePeerConnection.addIceCandidate(
+                        new RTCIceCandidate(candidate)
+                      );
+                    } catch (e) { console.error('WebRTC queued ICE error:', e); }
+                  }
+                  livePeerConnection._remoteIceQueue = [];
+                }
               } catch (e) { console.error('WebRTC answer error:', e); }
             });
 
             ioSocket.on('webrtc:ice-candidate', async (data) => {
               if (!livePeerConnection) return;
-              try {
-                await livePeerConnection.addIceCandidate(
-                  new RTCIceCandidate(data.candidate)
-                );
-              } catch (e) { console.error('WebRTC ICE error:', e); }
+              if (!livePeerConnection.remoteDescription) {
+                if (!livePeerConnection._remoteIceQueue) {
+                  livePeerConnection._remoteIceQueue = [];
+                }
+                livePeerConnection._remoteIceQueue.push(data.candidate);
+              } else {
+                try {
+                  await livePeerConnection.addIceCandidate(
+                    new RTCIceCandidate(data.candidate)
+                  );
+                } catch (e) { console.error('WebRTC ICE error:', e); }
+              }
             });
 
             ioSocket.on('webrtc:stop', () => {
